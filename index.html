@@ -976,7 +976,7 @@ const ERROS = {
 
 const PIPE_ID_ERROS = '1073359';
 function pipeUrl(cardId) {
-  return `https://app.pipefy.com/pipes/${PIPE_ID_ERROS}/cards/${cardId}`;
+  return `https://app.pipefy.com/open-cards/${cardId}`;
 }
 
 function fmtV(v) {
@@ -989,7 +989,9 @@ function renderErroList(elId, cards) {
   if(!el) return;
   el.innerHTML = cards.map(c => `
     <div class="err-ci">
-      <a class="err-ci-id" href="${pipeUrl(c.id)}" target="_blank" title="Abrir no Pipefy">#${c.id}</a>
+      <a class="err-ci-id" href="${pipeUrl(c.id)}" target="_blank" title="Clique para copiar o Código" onclick="copyId('${c.id}');return false;">📋 ${c.id}</a>
+          <a class="err-ci-id" href="https://app.pipefy.com/pipes/1073359" target="_blank" 
+             title="Abrir pipe" style="color:var(--text3);font-size:9px">↗</a>
       <span class="err-ci-desc" title="${c.desc}">${c.desc}</span>
       <span class="err-ci-val">${fmtV(c.valor)}</span>
       <span class="err-ci-fix fix-${c.fc||'warn'}">${c.fix}</span>
