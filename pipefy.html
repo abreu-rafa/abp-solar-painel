@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>ABP Solar · Pipefy Live</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --solar:#E8A020;--solar-bg:rgba(232,160,32,0.07);
+  --bg:#0F0F0F;--bg2:#181818;--bg3:#222;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#F0EDE8;--text2:#A09A90;--text3:#5A5550;
+  --ok:#3DB87A;--ng:#E85555;--info:#4A9EE8;--purple:#9B6FE8;
+  --r:10px;--fd:'Syne',sans-serif;--fm:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--fd);min-height:100vh}
+
+/* HEADER */
+.hdr{padding:14px 20px 12px;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-ic{width:28px;height:28px;background:var(--solar);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.logo-t{font-size:12px;font-weight:700;letter-spacing:.1em}
+.logo-s{font-size:10px;color:var(--text3);font-family:var(--fm)}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.chip{font-size:10px;font-family:var(--fm);padding:3px 9px;border-radius:4px}
+.chip-ok{background:rgba(61,184,122,.1);color:var(--ok)}
+.chip-ng{background:rgba(232,85,85,.1);color:var(--ng)}
+.chip-warn{background:var(--solar-bg);color:var(--solar)}
+.chip-info{background:rgba(74,158,232,.1);color:var(--info)}
+.btn{font-size:11px;font-family:var(--fm);font-weight:500;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;transition:all .15s;letter-spacing:.05em}
+.btn-primary{background:var(--solar);color:#0F0F0F}
+.btn-primary:hover{background:#f0a820}
+.btn-primary:disabled{background:#555;color:#888;cursor:not-allowed}
+.btn-ghost{background:var(--bg2);color:var(--text2);border:.5px solid var(--border2)}
+.btn-ghost:hover{color:var(--text)}
+.btn-sm{font-size:10px;padding:3px 10px}
+.btn-ng{background:rgba(232,85,85,.15);color:var(--ng);border:.5px solid rgba(232,85,85,.3)}
+.btn-ng:hover{background:rgba(232,85,85,.25)}
+
+/* TOKEN SETUP */
+.setup-wrap{max-width:540px;margin:60px auto;padding:0 20px}
+.setup-card{background:var(--bg2);border:.5px solid var(--border2);border-radius:14px;padding:28px}
+.setup-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.setup-sub{font-size:12px;color:var(--text2);margin-bottom:22px;line-height:1.6}
+.setup-label{font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:6px}
+.setup-input{width:100%;background:var(--bg3);border:.5px solid var(--border2);border-radius:7px;padding:10px 12px;font-size:11px;font-family:var(--fm);color:var(--text);outline:none;transition:border-color .15s}
+.setup-input:focus{border-color:var(--solar)}
+.setup-row{display:flex;gap:8px;margin-top:14px}
+.setup-hint{font-size:10px;color:var(--text3);margin-top:10px;font-family:var(--fm);line-height:1.6}
+.setup-hint a{color:var(--solar);text-decoration:none}
+
+/* TABS */
+.tabs{display:flex;border-bottom:.5px solid var(--border);overflow-x:auto}
+.tab{padding:9px 14px;font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--text2)}.tab.active{color:var(--solar);border-bottom-color:var(--solar)}
+.panel{display:none;padding:16px 20px}.panel.active{display:block}
+
+/* STATUS BAR */
+.status-bar{display:flex;align-items:center;gap:10px;padding:8px 20px;border-bottom:.5px solid var(--border);font-size:10px;font-family:var(--fm);color:var(--text3)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--text3)}
+.status-dot.ok{background:var(--ok)}
+.status-dot.ng{background:var(--ng)}
+.status-dot.loading{background:var(--solar);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* LOADER */
+.loader-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:14px}
+.loader{width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--solar);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-msg{font-size:11px;font-family:var(--fm);color:var(--text3)}
+
+/* MÉTRICAS */
+.mrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:7px;margin-bottom:14px}
+.mc{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:11px 12px}
+.mc.highlight{border-color:rgba(232,160,32,.3)}
+.mc-l{font-size:9px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:4px}
+.mc-v{font-size:16px;font-weight:700;line-height:1}
+.mc-s{font-size:9px;color:var(--text3);margin-top:4px;font-family:var(--fm)}
+.pos{color:var(--ok)}.neg{color:var(--ng)}.warn{color:var(--solar)}.info{color:var(--info)}.purple{color:var(--purple)}
+
+/* DRE */
+.dre-wrap{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.dre-row{display:flex;align-items:center;padding:7px 14px;border-bottom:.5px solid var(--border);font-size:12px}
+.dre-row:last-child{border-bottom:none}
+.dre-row.sub{background:rgba(255,255,255,.025);font-weight:600}
+.dre-row.tot{background:rgba(255,255,255,.045);font-size:13px;font-weight:700}
+.dre-name{flex:1;color:var(--text2)}
+.dre-name.ind{padding-left:14px;color:var(--text3);font-size:11px}
+.dre-name.head{color:var(--text);font-weight:600}
+.dre-val{font-family:var(--fm);min-width:110px;text-align:right}
+.dre-pct{font-size:10px;font-family:var(--fm);color:var(--text3);min-width:48px;text-align:right}
+
+/* CHARTS */
+.chart-label{font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:7px;margin-top:14px}
+.chart-wrap{position:relative;margin-bottom:4px}
+canvas{width:100%!important}
+
+/* PIPELINE */
+.pipe-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:.5px solid var(--border);font-size:12px}
+.pipe-row:last-child{border-bottom:none}
+.pipe-label{color:var(--text2);flex:1}
+.pipe-val{font-family:var(--fm);min-width:100px;text-align:right}
+.pipe-badge{font-size:9px;font-family:var(--fm);padding:2px 7px;border-radius:4px;margin-right:8px;flex-shrink:0}
+.badge-rec{background:rgba(61,184,122,.1);color:var(--ok)}
+.badge-ris{background:rgba(232,85,85,.1);color:var(--ng)}
+.badge-warn{background:rgba(232,160,32,.1);color:var(--solar)}
+.badge-info{background:rgba(74,158,232,.1);color:var(--info)}
+.box{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.box-title{font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;padding:10px 14px;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+
+/* ERROS */
+.err-card{background:var(--bg2);border:.5px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:8px}
+.err-card.crit{border-left:3px solid var(--ng)}
+.err-card.war{border-left:3px solid var(--solar)}
+.err-card.inf{border-left:3px solid var(--info)}
+.err-h{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;gap:8px}
+.err-name{font-size:12px;font-weight:600}
+.err-vol{font-size:10px;font-family:var(--fm);color:var(--text3);white-space:nowrap}
+.err-desc{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:8px}
+.err-fix{font-size:10px;font-family:var(--fm);color:var(--solar);margin-bottom:10px}
+.err-cards-list{display:flex;flex-direction:column;gap:4px}
+.err-card-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:5px;padding:6px 10px;font-size:11px;gap:8px}
+.err-card-name{color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.err-card-val{font-family:var(--fm);color:var(--solar);font-size:10px;white-space:nowrap}
+.err-card-fix{font-size:9px;font-family:var(--fm);color:var(--text3)}
+
+.alert-box{border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.7;margin-bottom:10px}
+.alert-ng{background:rgba(232,85,85,.06);border:.5px solid rgba(232,85,85,.2);color:#E89090}
+.alert-warn{background:var(--solar-bg);border:.5px solid rgba(232,160,32,.2);color:var(--solar)}
+.alert-info{background:rgba(74,158,232,.06);border:.5px solid rgba(74,158,232,.2);color:var(--info)}
+
+/* CAMPOS DEBUG */
+.field-row{display:flex;align-items:flex-start;padding:6px 14px;border-bottom:.5px solid var(--border);font-size:11px;gap:10px}
+.field-row:last-child{border-bottom:none}
+.field-id{font-family:var(--fm);color:var(--solar);font-size:10px;min-width:160px;word-break:break-all}
+.field-name{color:var(--text2);flex:1}
+.field-type{font-family:var(--fm);color:var(--text3);font-size:9px;min-width:80px;text-align:right}
+
+/* FASES */
+.phase-row{display:flex;align-items:center;padding:6px 14px;border-bottom:.5px solid var(--border);font-size:11px;gap:10px}
+.phase-row:last-child{border-bottom:none}
+.phase-id{font-family:var(--fm);color:var(--purple);font-size:10px;min-width:100px}
+.phase-name{color:var(--text2);flex:1}
+.phase-count{font-family:var(--fm);color:var(--text3);font-size:10px}
+
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head><body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-wrap">
+    <div class="setup-card">
+      <div style="font-size:22px;margin-bottom:12px">☀️</div>
+      <div class="setup-title">ABP Solar · Conexão Pipefy</div>
+      <div class="setup-sub">Cole seu Personal Access Token do Pipefy abaixo. Ele fica salvo só no seu navegador (localStorage) e nunca sai daqui.</div>
+
+      <div class="setup-label">PERSONAL ACCESS TOKEN</div>
+      <input type="password" id="token-input" class="setup-input" placeholder="eyJhbGciOi..." autocomplete="off">
+
+      <div style="margin-top:12px">
+        <div class="setup-label">PIPE ID</div>
+        <input type="text" id="pipe-input" class="setup-input" value="1073359" placeholder="1073359">
+      </div>
+
+      <div class="setup-row">
+        <button class="btn btn-primary" onclick="conectar()">Conectar e mapear pipe</button>
+        <button class="btn btn-ghost" onclick="carregarSalvo()">Usar token salvo</button>
+      </div>
+
+      <div class="setup-hint">
+        Token em: <a href="https://app.pipefy.com/tokens" target="_blank">app.pipefy.com/tokens</a> → Personal Access Tokens → Generate new token<br>
+        O painel faz as chamadas direto do seu browser para api.pipefy.com — sem servidor intermediário.
+      </div>
+
+      <div id="setup-error" style="display:none;margin-top:14px" class="alert-box alert-ng"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app" style="display:none">
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-ic">☀️</div>
+      <div>
+        <div class="logo-t">ABP SOLAR · PIPEFY LIVE</div>
+        <div class="logo-s" id="hdr-sub">Conectando...</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <span id="status-chip" class="chip chip-warn">● conectando</span>
+      <button class="btn btn-primary btn-sm" id="btn-atualizar" onclick="carregarDados()" disabled>↻ Atualizar</button>
+      <button class="btn btn-ghost btn-sm" onclick="desconectar()">Sair</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-msg">Aguardando dados...</span>
+    <span style="margin-left:auto;color:var(--text3)" id="last-update"></span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="sw('visao')">VISÃO GERAL</div>
+    <div class="tab" onclick="sw('dre')">DRE</div>
+    <div class="tab" onclick="sw('fluxo')">FLUXO</div>
+    <div class="tab" onclick="sw('pipeline')">PIPELINE</div>
+    <div class="tab" onclick="sw('erros')">ERROS <span id="erros-badge" style="background:rgba(232,85,85,.18);color:var(--ng);font-size:9px;padding:1px 5px;border-radius:3px;margin-left:3px">—</span></div>
+    <div class="tab" onclick="sw('config')">CONFIG</div>
+  </div>
+
+  <!-- VISÃO GERAL -->
+  <div id="p-visao" class="panel active">
+    <div id="visao-loader" class="loader-wrap"><div class="loader"></div><div class="loader-msg">Buscando cards do Pipefy...</div></div>
+    <div id="visao-content" style="display:none">
+      <div class="mrow" id="metrics-row1"></div>
+      <div class="mrow" id="metrics-row2"></div>
+      <div class="chart-label">COMPOSIÇÃO DE DESPESAS POR CATEGORIA</div>
+      <div class="chart-wrap" style="height:170px"><canvas id="ch-donut"></canvas></div>
+      <div class="chart-label">RECEITAS VS DESPESAS MENSAIS (R$)</div>
+      <div class="chart-wrap" style="height:190px"><canvas id="ch-mensal"></canvas></div>
+    </div>
+  </div>
+
+  <!-- DRE -->
+  <div id="p-dre" class="panel">
+    <div id="dre-loader" class="loader-wrap" style="display:none"><div class="loader"></div><div class="loader-msg">Calculando DRE...</div></div>
+    <div id="dre-content">
+      <div style="font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:10px" id="dre-period">DRE — BASE CAIXA</div>
+      <div class="dre-wrap" id="dre-table"></div>
+      <div id="dre-alerts"></div>
+      <div class="chart-label">EVOLUÇÃO MENSAL POR CATEGORIA DE CUSTO</div>
+      <div class="chart-wrap" style="height:210px"><canvas id="ch-stack"></canvas></div>
+    </div>
+  </div>
+
+  <!-- FLUXO -->
+  <div id="p-fluxo" class="panel">
+    <div style="font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:12px">FLUXO DE CAIXA — BASE CONFIRMAÇÃO / PAGAMENTO</div>
+    <div class="mrow" id="fluxo-meses"></div>
+    <div class="chart-label">ENTRADAS VS SAÍDAS MENSAIS</div>
+    <div class="chart-wrap" style="height:195px"><canvas id="ch-fc"></canvas></div>
+    <div class="chart-label">SALDO ACUMULADO (R$)</div>
+    <div class="chart-wrap" style="height:130px"><canvas id="ch-saldo"></canvas></div>
+    <div id="fluxo-alert" class="alert-box alert-warn" style="margin-top:10px;display:none"></div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div id="p-pipeline" class="panel">
+    <div style="font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:12px">POSIÇÃO FINANCEIRA PROJETADA</div>
+    <div class="mrow" id="pipeline-metrics"></div>
+    <div class="box">
+      <div class="box-title">PIPELINE DE RECEBÍVEIS POR FASE</div>
+      <div id="pipeline-rec"></div>
+    </div>
+    <div class="box">
+      <div class="box-title">DESPESAS COMPROMETIDAS</div>
+      <div id="pipeline-desp"></div>
+    </div>
+    <div class="chart-label">COMPOSIÇÃO DO PIPELINE (R$)</div>
+    <div class="chart-wrap" style="height:160px"><canvas id="ch-pipe"></canvas></div>
+  </div>
+
+  <!-- ERROS -->
+  <div id="p-erros" class="panel">
+    <div style="font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:12px">INCONSISTÊNCIAS DETECTADAS NOS CARDS DO PIPEFY</div>
+    <div id="erros-content"></div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="p-config" class="panel">
+    <div style="font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:14px">MAPEAMENTO DE CAMPOS DO PIPE</div>
+
+    <div class="box">
+      <div class="box-title">FASES DO PIPE <span id="phases-count" style="color:var(--text3)"></span></div>
+      <div id="phases-list"></div>
+    </div>
+
+    <div class="box">
+      <div class="box-title">CAMPOS MAPEADOS <span id="fields-count" style="color:var(--text3)"></span></div>
+      <div id="fields-list"></div>
+    </div>
+
+    <div class="box" style="margin-top:14px">
+      <div class="box-title">MAPEAMENTO MANUAL DE CAMPOS</div>
+      <div style="padding:14px;font-size:11px;color:var(--text2);line-height:1.8">
+        Se os campos automáticos não baterem, ajuste os IDs abaixo e clique em Salvar.<br>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px" id="field-map-inputs"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="salvarMapeamento()">Salvar mapeamento</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ============================================================
+// CONFIGURAÇÃO
+// ============================================================
+const PIPE_ID_DEFAULT = '1073359';
+const PIPEFY_URL = 'https://api.pipefy.com/graphql';
+
+// Fases esperadas (nome → categoria interna)
+const FASE_MAP = {
+  'Concluído': 'concluido',
+  'Receber': 'receber',
+  'Taxa de cartão': 'taxa_cartao',
+  'Saldo de contratos / Permutas': 'saldo_contratos',
+  'Pagar': 'pagar',
+  'Provisionar': 'provisionar',
+  'Cancelados / Calotes': 'calotes',
+  'Aguardando aprovação': 'ag_aprovacao',
+  'Conciliação Financeira': 'conciliacao',
+  'Protestos / Judicial / Negociação': 'protestos',
+};
+
+// Modelo oficial de categorias
+const CATS_OFICIAIS = [
+  'Aquisição de Clientes','Estrutura e Administração','Financeiro, Jurídico e Contábil',
+  'Implantação / Operação','Pessoas','Pós-venda e Suporte','Projeto e Engenharia','Tecnologia','Reserva'
+];
+const TIPOS_CUSTO_VALIDOS = ['Direto','Indireto Compartilhado','Estrutural'];
+const CENTROS_VALIDOS = ['Administrativo','Comercial','Engenharia','Operação','Frota'];
+const TIPOS_APROP_VALIDOS = ['Despesa do Mês','Estoque','Ativo / Investimento','Despesa Antecipada / Crédito'];
+
+// Campos que vamos buscar (nome provável → campo interno)
+// Serão descobertos automaticamente pelo mapeamento
+let FIELD_MAP = JSON.parse(localStorage.getItem('abp_field_map') || 'null') || {
+  valor: null,
+  fase: null,
+  tipo_lancamento: null,
+  categoria_principal: null,
+  tipo_custo: null,
+  centro_custo: null,
+  tipo_apropriacao: null,
+  contrato_destino: null,
+  data_competencia: null,
+  data_confirmacao: null,
+  data_pagamento: null,
+  natureza_pagamento: null,
+};
+
+// Estado global
+let TOKEN = '';
+let PIPE_ID = PIPE_ID_DEFAULT;
+let pipeData = null;      // estrutura do pipe
+let allCards = [];         // todos os cards
+let charts = {};
+
+// ============================================================
+// AUTH
+// ============================================================
+function conectar() {
+  TOKEN = document.getElementById('token-input').value.trim();
+  PIPE_ID = document.getElementById('pipe-input').value.trim() || PIPE_ID_DEFAULT;
+  if (!TOKEN) { showSetupError('Cole o token primeiro.'); return; }
+  localStorage.setItem('abp_token', TOKEN);
+  localStorage.setItem('abp_pipe_id', PIPE_ID);
+  iniciarApp();
+}
+
+function carregarSalvo() {
+  TOKEN = localStorage.getItem('abp_token') || '';
+  PIPE_ID = localStorage.getItem('abp_pipe_id') || PIPE_ID_DEFAULT;
+  if (!TOKEN) { showSetupError('Nenhum token salvo. Cole o token acima.'); return; }
+  iniciarApp();
+}
+
+function desconectar() {
+  TOKEN = '';
+  document.getElementById('setup-screen').style.display = '';
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('token-input').value = '';
+}
+
+function showSetupError(msg) {
+  const el = document.getElementById('setup-error');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = '';
+}
+
+// ============================================================
+// PIPEFY GRAPHQL
+// ============================================================
+async function gql(query, variables={}) {
+  const res = await fetch(PIPEFY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + TOKEN
+    },
+    body: JSON.stringify({ query, variables })
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data.data;
+}
+
+// Busca estrutura do pipe (fases + campos)
+async function fetchPipeStructure() {
+  const q = `query($id: ID!) {
+    pipe(id: $id) {
+      id name
+      phases {
+        id name cards_count
+        fields { id label type }
+      }
+      start_form_fields { id label type options }
+    }
+  }`;
+  return await gql(q, { id: PIPE_ID });
+}
+
+// Busca TODOS os cards paginados
+async function fetchAllCards(phaseId=null) {
+  let cards = [];
+  let cursor = null;
+  let page = 0;
+
+  const cardFields = buildCardFieldsQuery();
+
+  while (true) {
+    page++;
+    setStatus('loading', `Buscando cards... página ${page} (${cards.length} até agora)`);
+
+    let q, vars;
+    if (phaseId) {
+      q = `query($phaseId: ID!, $after: String) {
+        phase(id: $phaseId) {
+          cards(first: 50, after: $after) {
+            pageInfo { hasNextPage endCursor }
+            edges { node { id title ${cardFields} } }
+          }
+        }
+      }`;
+      vars = { phaseId, after: cursor };
+    } else {
+      q = `query($pipeId: ID!, $after: String) {
+        cards(pipe_id: $pipeId, first: 50, after: $after) {
+          pageInfo { hasNextPage endCursor }
+          edges { node { id title current_phase { id name } ${cardFields} } }
+        }
+      }`;
+      vars = { pipeId: PIPE_ID, after: cursor };
+    }
+
+    try {
+      const data = await gql(q, vars);
+      const conn = phaseId ? data.phase.cards : data.cards;
+      const edges = conn.edges || [];
+      cards.push(...edges.map(e => e.node));
+      if (!conn.pageInfo.hasNextPage) break;
+      cursor = conn.pageInfo.endCursor;
+    } catch(e) {
+      console.warn('Erro paginação:', e);
+      break;
+    }
+  }
+  return cards;
+}
+
+function buildCardFieldsQuery() {
+  return `fields { field { id label } value array_value date_value datetime_value }`;
+}
+
+// Mutation: atualizar campo de um card
+async function updateCardField(cardId, fieldId, newValue) {
+  const q = `mutation($input: UpdateCardFieldInput!) {
+    updateCardField(input: $input) { success clientMutationId }
+  }`;
+  return await gql(q, {
+    input: { card_id: cardId, field_id: fieldId, new_value: newValue }
+  });
+}
+
+// ============================================================
+// MAPEAMENTO AUTOMÁTICO DE CAMPOS
+// ============================================================
+function autoMapFields(pipeStruct) {
+  const fields = pipeStruct.pipe.start_form_fields || [];
+  // Também pega campos das fases
+  pipeStruct.pipe.phases.forEach(ph => {
+    (ph.fields || []).forEach(f => {
+      if (!fields.find(x => x.id === f.id)) fields.push(f);
+    });
+  });
+
+  const lower = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+  const tryMatch = (keywords) => {
+    for (const kw of keywords) {
+      const f = fields.find(f => lower(f.label).includes(lower(kw)));
+      if (f) return f.id;
+    }
+    return null;
+  };
+
+  const mapped = {
+    valor: tryMatch(['valor','value','amount','total']),
+    fase: tryMatch(['fase','phase','etapa','status']),
+    tipo_lancamento: tryMatch(['tipo de lançamento','tipo lancamento','tipo de lancamento','lançamento']),
+    categoria_principal: tryMatch(['categoria principal','categoria','category']),
+    tipo_custo: tryMatch(['tipo de custo','tipo custo']),
+    centro_custo: tryMatch(['centro de custo','centro custo','centro']),
+    tipo_apropriacao: tryMatch(['tipo de apropr','apropriacao','apropriac']),
+    contrato_destino: tryMatch(['contrato / destino','contrato/destino','contrato','destino']),
+    data_competencia: tryMatch(['competência','competencia','data da competencia']),
+    data_confirmacao: tryMatch(['confirmação do recebimento','confirmacao','data da confirm']),
+    data_pagamento: tryMatch(['agendamento / pagamento','data do agend','data pagamento','pagamento']),
+    natureza_pagamento: tryMatch(['natureza do pagamento','natureza']),
+  };
+
+  return { mapped, allFields: fields };
+}
+
+// ============================================================
+// PROCESSAMENTO DOS CARDS
+// ============================================================
+function getFieldValue(card, fieldId) {
+  if (!fieldId) return null;
+  const f = (card.fields || []).find(f => f.field.id === fieldId);
+  if (!f) return null;
+  return f.value || (f.array_value && f.array_value[0]) || f.date_value || f.datetime_value || null;
+}
+
+function getFieldValues(card, fieldId) {
+  if (!fieldId) return [];
+  const f = (card.fields || []).find(f => f.field.id === fieldId);
+  if (!f) return [];
+  return f.array_value || (f.value ? [f.value] : []);
+}
+
+function parseValor(v) {
+  if (!v) return 0;
+  const s = String(v).replace(/[R$\s]/g,'').replace(',','.');
+  return parseFloat(s) || 0;
+}
+
+function parseDate(card) {
+  // Tenta data confirmação, depois data pagamento
+  const dc = getFieldValue(card, FIELD_MAP.data_confirmacao);
+  const dp = getFieldValue(card, FIELD_MAP.data_pagamento);
+  const dd = dc || dp;
+  if (!dd) return null;
+  return new Date(dd);
+}
+
+function getMes(card) {
+  const d = parseDate(card);
+  return d ? d.getMonth() + 1 : null;
+}
+
+function processCards(cards) {
+  const result = {
+    receitas: { concluido:[], pipeline:[] },
+    despesas: { concluido:[], pipeline:[] },
+    taxas: [],
+    calotes: [],
+    protestos: [],
+    cancelados_desp: [],
+    byFase: {},
+    byCategoria: {},
+  };
+
+  for (const card of cards) {
+    const fase = card.current_phase?.name || '';
+    const valor = parseValor(getFieldValue(card, FIELD_MAP.valor));
+    const tipo = getFieldValue(card, FIELD_MAP.tipo_lancamento) || '';
+    const cat = getFieldValue(card, FIELD_MAP.categoria_principal) || '';
+
+    if (!result.byFase[fase]) result.byFase[fase] = { cards:[], total:0 };
+    result.byFase[fase].cards.push(card);
+    result.byFase[fase].total += valor;
+
+    const isReceber = tipo.toLowerCase().includes('receber');
+    const isPagar = tipo.toLowerCase().includes('pagar') || tipo.toLowerCase().includes('caju');
+    const isTaxa = tipo.toLowerCase().includes('cart') || fase === 'Taxa de cartão';
+
+    if (isTaxa) {
+      result.taxas.push({...card, _valor:valor, _fase:fase});
+    } else if (fase === 'Cancelados / Calotes') {
+      if (isReceber) result.calotes.push({...card, _valor:valor});
+      else result.cancelados_desp.push({...card, _valor:valor});
+    } else if (fase === 'Protestos / Judicial / Negociação') {
+      result.protestos.push({...card, _valor:valor});
+    } else if (isReceber) {
+      if (fase === 'Concluído') result.receitas.concluido.push({...card, _valor:valor, _mes:getMes(card)});
+      else result.receitas.pipeline.push({...card, _valor:valor, _fase:fase});
+    } else if (isPagar) {
+      if (fase === 'Concluído') result.despesas.concluido.push({...card, _valor:valor, _mes:getMes(card), _cat:cat});
+      else result.despesas.pipeline.push({...card, _valor:valor, _fase:fase, _cat:cat});
+    }
+  }
+
+  return result;
+}
+
+function calcMetrics(proc) {
+  const sum = arr => arr.reduce((a,c) => a + c._valor, 0);
+  const sumMes = (arr, m) => arr.filter(c => c._mes === m).reduce((a,c) => a + c._valor, 0);
+  const sumCat = (arr, cat) => arr.filter(c => c._cat === cat).reduce((a,c) => a + c._valor, 0);
+  const sumFase = (arr, fase) => arr.filter(c => c._fase === fase).reduce((a,c) => a + c._valor, 0);
+
+  const rec = sum(proc.receitas.concluido);
+  const desp = sum(proc.despesas.concluido);
+  const taxas = sum(proc.taxas);
+  const resultado = rec - desp - taxas;
+
+  const cpvCats = ['Implantação / Operação','Pós-venda e Suporte','Projeto e Engenharia'];
+  const cpv = cpvCats.reduce((a,c) => a + sumCat(proc.despesas.concluido, c), 0);
+  const margem_bruta = rec > 0 ? (rec - cpv) / rec : 0;
+
+  const pessoasCusto = sumCat(proc.despesas.concluido, 'Pessoas');
+  const estruturaCusto = sumCat(proc.despesas.concluido, 'Estrutura e Administração');
+  const aquisicaoCusto = sumCat(proc.despesas.concluido, 'Aquisição de Clientes');
+  const tecCusto = sumCat(proc.despesas.concluido, 'Tecnologia');
+  const finCusto = sumCat(proc.despesas.concluido, 'Financeiro, Jurídico e Contábil');
+  const ebitda = rec - cpv - pessoasCusto - estruturaCusto - aquisicaoCusto - tecCusto;
+
+  const pipeline_rec = sumFase(proc.receitas.pipeline, 'Receber')
+    + sumFase(proc.receitas.pipeline, 'Saldo de contratos / Permutas')
+    + sumFase(proc.receitas.pipeline, 'Conciliação Financeira')
+    + sumFase(proc.receitas.pipeline, 'Provisionar');
+  const a_pagar = sumFase(proc.despesas.pipeline, 'Pagar')
+    + sumFase(proc.despesas.pipeline, 'Aguardando aprovação')
+    + sumFase(proc.despesas.pipeline, 'Provisionar');
+  const inadimplencia = sum(proc.calotes) + sum(proc.protestos);
+  const cancelados_desp = sum(proc.cancelados_desp);
+
+  // Por mês
+  const meses = [1,2,3,4,5,6];
+  const rec_mes = meses.map(m => sumMes(proc.receitas.concluido, m));
+  const desp_mes = meses.map(m => sumMes(proc.despesas.concluido, m));
+  let saldo_acum = [], acum = 0;
+  meses.forEach((m,i) => { acum += rec_mes[i] - desp_mes[i]; saldo_acum.push(acum); });
+
+  // Por categoria e mês
+  const cats_stack = ['Implantação / Operação','Pessoas','Estrutura e Administração','Aquisição de Clientes','Financeiro, Jurídico e Contábil','Tecnologia'];
+  const cat_mes = {};
+  cats_stack.forEach(c => {
+    cat_mes[c] = meses.map(m => proc.despesas.concluido.filter(x => x._cat === c && x._mes === m).reduce((a,x) => a+x._valor, 0));
+  });
+
+  // Categorias totais
+  const cat_totals = {};
+  CATS_OFICIAIS.forEach(c => { cat_totals[c] = sumCat(proc.despesas.concluido, c); });
+
+  return {
+    rec, desp, taxas, resultado, margem_bruta, ebitda,
+    pessoasCusto, estruturaCusto, aquisicaoCusto, tecCusto, finCusto,
+    cpv, pipeline_rec, a_pagar, inadimplencia, cancelados_desp,
+    saldo_acum, rec_mes, desp_mes, cat_mes, cat_totals,
+    rec_count: proc.receitas.concluido.length,
+    desp_count: proc.despesas.concluido.length,
+    total_cards: allCards.length,
+    byFase: proc.byFase,
+    // Pipeline detalhado
+    pipeline_receber: sumFase(proc.receitas.pipeline, 'Receber'),
+    pipeline_saldo: sumFase(proc.receitas.pipeline, 'Saldo de contratos / Permutas'),
+    pipeline_conciliacao: sumFase(proc.receitas.pipeline, 'Conciliação Financeira'),
+    pipeline_provisionar_rec: sumFase(proc.receitas.pipeline, 'Provisionar'),
+    pipeline_pagar: sumFase(proc.despesas.pipeline, 'Pagar'),
+    pipeline_ag_aprov: sumFase(proc.despesas.pipeline, 'Aguardando aprovação'),
+    pipeline_provisionar_desp: sumFase(proc.despesas.pipeline, 'Provisionar'),
+  };
+}
+
+// ============================================================
+// DETECÇÃO DE ERROS
+// ============================================================
+function detectErrors(cards) {
+  const erros = [];
+  const getVal = (card, fieldId) => getFieldValue(card, fieldId);
+
+  const inv_tipo = cards.filter(c => {
+    const v = getVal(c, FIELD_MAP.tipo_custo);
+    return v && !TIPOS_CUSTO_VALIDOS.includes(v) && ['Variável','Fixa','variavel','fixa'].some(x => v.toLowerCase().includes(x.toLowerCase()));
+  });
+
+  const inv_cc = cards.filter(c => {
+    const v = getVal(c, FIELD_MAP.centro_custo);
+    return v && !CENTROS_VALIDOS.includes(v);
+  });
+
+  const epi_estrutural = cards.filter(c => {
+    const desc = (c.title || '').toLowerCase();
+    const tipo = getVal(c, FIELD_MAP.tipo_custo);
+    return tipo === 'Estrutural' && /epi|capacete|luva|bota|cinto|óculos|oculos|protetor/.test(desc);
+  });
+
+  const direto_sem_contrato = cards.filter(c => {
+    const tipo = getVal(c, FIELD_MAP.tipo_custo);
+    const contrato = getVal(c, FIELD_MAP.contrato_destino);
+    return tipo === 'Direto' && (!contrato || ['Contrato','Materiais','Estoque',''].includes(contrato.trim()));
+  });
+
+  const impl_est_estrutural = cards.filter(c => {
+    const cat = getVal(c, FIELD_MAP.categoria_principal);
+    const aprop = getVal(c, FIELD_MAP.tipo_apropriacao);
+    const tipo = getVal(c, FIELD_MAP.tipo_custo);
+    return cat === 'Implantação / Operação' && aprop === 'Estoque' && tipo === 'Estrutural';
+  });
+
+  if (inv_tipo.length) erros.push({
+    severity:'crit', name:'Tipo de Custo inválido: "Variável" ou "Fixa"',
+    count: inv_tipo.length, valor: inv_tipo.reduce((a,c)=>a+parseValor(getVal(c,FIELD_MAP.valor)),0),
+    desc:'Não existem no modelo oficial. Quebram análise de margem por contrato.',
+    fix:'→ Reclassificar como Direto, Indireto Compartilhado ou Estrutural',
+    cards: inv_tipo,
+    fieldId: FIELD_MAP.tipo_custo,
+  });
+
+  if (inv_cc.length) erros.push({
+    severity:'crit', name:'Centros de Custo fora do modelo',
+    count: inv_cc.length, valor: inv_cc.reduce((a,c)=>a+parseValor(getVal(c,FIELD_MAP.valor)),0),
+    desc:'Centros aceitos: Administrativo, Comercial, Engenharia, Operação, Frota.',
+    fix:'→ Materiais → Operação · Contratos → Operação · Pessoas → Administrativo',
+    cards: inv_cc,
+    fieldId: FIELD_MAP.centro_custo,
+  });
+
+  if (epi_estrutural.length) erros.push({
+    severity:'war', name:'EPIs classificados como Estrutural',
+    count: epi_estrutural.length, valor: epi_estrutural.reduce((a,c)=>a+parseValor(getVal(c,FIELD_MAP.valor)),0),
+    desc:'EPI é custo operacional rastreável. Estrutural infla artificialmente a margem bruta.',
+    fix:'→ EPI por obra → Direto · EPI compartilhado → Indireto Compartilhado',
+    cards: epi_estrutural,
+    fieldId: FIELD_MAP.tipo_custo,
+  });
+
+  if (impl_est_estrutural.length) erros.push({
+    severity:'war', name:'Implantação/Op + Estoque + Estrutural (contradição)',
+    count: impl_est_estrutural.length, valor: impl_est_estrutural.reduce((a,c)=>a+parseValor(getVal(c,FIELD_MAP.valor)),0),
+    desc:'Material de operação em estoque não pode ser Estrutural.',
+    fix:'→ Manter Estoque, corrigir Tipo para Direto ou Indireto Compartilhado',
+    cards: impl_est_estrutural,
+    fieldId: FIELD_MAP.tipo_custo,
+  });
+
+  if (direto_sem_contrato.length) erros.push({
+    severity:'inf', name:'Custo Direto sem identificação de contrato',
+    count: direto_sem_contrato.length, valor: 0,
+    desc:'Tipo = Direto mas campo Contrato/Destino vazio ou genérico. Impossível calcular margem por obra.',
+    fix:'→ Vincular ao código do contrato (P1184, P1452...) no campo Contrato/Destino',
+    cards: direto_sem_contrato,
+    fieldId: FIELD_MAP.contrato_destino,
+  });
+
+  return erros;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+const R = (v) => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:0,maximumFractionDigits:0});
+const Rk = (v) => {
+  const abs = Math.abs(v);
+  if (abs >= 1e6) return 'R$ ' + (abs/1e6).toFixed(2).replace('.',',') + 'M';
+  if (abs >= 1e3) return 'R$ ' + Math.round(abs/1000) + 'K';
+  return R(v);
+};
+const pct = (v) => (v*100).toFixed(1) + '%';
+const sign = (v) => v >= 0 ? '' : '−';
+
+function mc(label, value, sub, cls='neu', highlight=false) {
+  return `<div class="mc${highlight?' highlight':''}">
+    <div class="mc-l">${label}</div>
+    <div class="mc-v ${cls}">${value}</div>
+    <div class="mc-s">${sub}</div>
+  </div>`;
+}
+
+function renderVisao(m) {
+  document.getElementById('metrics-row1').innerHTML =
+    mc('RECEITA REALIZADA', Rk(m.rec), `${m.rec_count} recebimentos`, 'pos') +
+    mc('DESPESAS PAGAS', Rk(m.desp), `${m.desp_count} lançamentos`, 'neg') +
+    mc('TAXAS CARTÃO', Rk(m.taxas), 'cobranças', 'neg') +
+    mc('RESULTADO REAL', (m.resultado<0?'−':'')+Rk(m.resultado), pct(m.resultado/m.rec)+' da receita', m.resultado>=0?'pos':'neg', true) +
+    mc('MARGEM BRUTA', pct(m.margem_bruta), R(m.rec - m.cpv), m.margem_bruta>0.35?'pos':'warn') +
+    mc('EBITDA', pct(m.ebitda/m.rec), R(m.ebitda), m.ebitda>0?'warn':'neg');
+
+  document.getElementById('metrics-row2').innerHTML =
+    mc('PIPELINE A RECEBER', Rk(m.pipeline_rec), 'a confirmar', 'info') +
+    mc('DESPESAS A PAGAR', Rk(m.a_pagar), 'compromissado', 'warn') +
+    mc('SALDO LÍQUIDO PROJ.', Rk(m.pipeline_rec - m.a_pagar), 'pipeline − a pagar', 'pos') +
+    mc('INADIMPLÊNCIA', Rk(m.inadimplencia), 'calotes + protestos', 'neg') +
+    mc('CANCELADOS PAGAR', Rk(m.cancelados_desp), 'economia operacional', 'info') +
+    mc('SALDO ACUM.', (m.saldo_acum[5]<0?'−':'')+Rk(m.saldo_acum[5]), 'sem pipeline', m.saldo_acum[5]>=0?'pos':'neg');
+
+  buildDonut(m);
+  buildMensal(m);
+}
+
+function renderDRE(m) {
+  const row = (name, val, pctVal, ind=true, cls='sub') => {
+    const isNeg = val < 0 || (ind && name.includes('(−)'));
+    const valClass = name.includes('RESULTADO') ? 'neg' : (val > 0 && !ind ? 'pos' : (val < 0 ? 'neg' : 'warn'));
+    return `<div class="dre-row ${cls}">
+      <span class="dre-name ${ind?'ind':'head'}">${name}</span>
+      <span class="dre-val ${valClass}">${val<0?'−':''}${R(val)}</span>
+      <span class="dre-pct">${pctVal}</span>
+    </div>`;
+  };
+
+  const impl = m.cat_totals['Implantação / Operação'] || 0;
+  const posv = m.cat_totals['Pós-venda e Suporte'] || 0;
+  const proj = m.cat_totals['Projeto e Engenharia'] || 0;
+  const mgb = m.rec - impl - posv - proj;
+
+  document.getElementById('dre-table').innerHTML = `
+    <div class="dre-row sub"><span class="dre-name head">RECEITA BRUTA</span><span class="dre-val pos">${R(m.rec)}</span><span class="dre-pct">100%</span></div>
+    <div class="dre-row"><span class="dre-name ind">(−) Implantação / Operação</span><span class="dre-val neg">${R(impl)}</span><span class="dre-pct warn">${pct(impl/m.rec)}</span></div>
+    <div class="dre-row"><span class="dre-name ind">(−) Pós-venda e Suporte</span><span class="dre-val neg">${R(posv)}</span><span class="dre-pct">${pct(posv/m.rec)}</span></div>
+    <div class="dre-row"><span class="dre-name ind">(−) Projeto e Engenharia</span><span class="dre-val neg">${R(proj)}</span><span class="dre-pct">${pct(proj/m.rec)}</span></div>
+    <div class="dre-row sub"><span class="dre-name">= MARGEM BRUTA</span><span class="dre-val pos">${R(mgb)}</span><span class="dre-pct pos">${pct(mgb/m.rec)}</span></div>
+    <div class="dre-row"><span class="dre-name ind">(−) Pessoas</span><span class="dre-val neg">${R(m.pessoasCusto)}</span><span class="dre-pct warn">${pct(m.pessoasCusto/m.rec)}</span></div>
+    <div class="dre-row"><span class="dre-name ind">(−) Estrutura e Administração</span><span class="dre-val neg">${R(m.estruturaCusto)}</span><span class="dre-pct warn">${pct(m.estruturaCusto/m.rec)}</span></div>
+    <div class="dre-row"><span class="dre-name ind">(−) Aquisição de Clientes</span><span class="dre-val neg">${R(m.aquisicaoCusto)}</span><span class="dre-pct">${pct(m.aquisicaoCusto/m.rec)}</span></div>
+    <div class="dre-row"><span class="dre-name ind">(−) Tecnologia</span><span class="dre-val neg">${R(m.tecCusto)}</span><span class="dre-pct">${pct(m.tecCusto/m.rec)}</span></div>
+    <div class="dre-row sub"><span class="dre-name">= EBITDA</span><span class="dre-val ${m.ebitda>0?'warn':'neg'}">${m.ebitda<0?'−':''}${R(m.ebitda)}</span><span class="dre-pct warn">${pct(m.ebitda/m.rec)}</span></div>
+    <div class="dre-row"><span class="dre-name ind">(−) Financeiro, Jurídico e Contábil</span><span class="dre-val neg">${R(m.finCusto)}</span><span class="dre-pct">${pct(m.finCusto/m.rec)}</span></div>
+    <div class="dre-row"><span class="dre-name ind">(−) Taxas de Cartão de Crédito</span><span class="dre-val neg">${R(m.taxas)}</span><span class="dre-pct">${pct(m.taxas/m.rec)}</span></div>
+    <div class="dre-row tot"><span class="dre-name" style="color:var(--ng)">= RESULTADO OPERACIONAL</span><span class="dre-val neg">${m.resultado<0?'− ':''}${R(m.resultado)}</span><span class="dre-pct neg">${pct(m.resultado/m.rec)}</span></div>
+  `;
+
+  buildStack(m);
+}
+
+function renderFluxo(m) {
+  const labels = ['Jan','Fev','Mar','Abr','Mai','Jun'];
+  const diffs = m.rec_mes.map((r,i) => r - m.desp_mes[i]);
+  document.getElementById('fluxo-meses').innerHTML = labels.map((l,i) => {
+    const d = diffs[i];
+    return mc(l, (d<0?'−':'+') + Rk(Math.abs(d)), d>=0?'receita > desp':'despesas > rec', d>=0?'pos':'neg');
+  }).join('');
+
+  const alert = document.getElementById('fluxo-alert');
+  const worstIdx = diffs.indexOf(Math.min(...diffs));
+  const bestIdx = diffs.indexOf(Math.max(...diffs));
+  if (worstIdx >= 0) {
+    alert.innerHTML = `⚠️ <strong>${labels[worstIdx]} é o mês mais crítico:</strong> ${Rk(m.desp_mes[worstIdx])} em despesas vs ${Rk(m.rec_mes[worstIdx])} de receita. Volatilidade alta entre ${labels[bestIdx]} (${diffs[bestIdx]>=0?'+':''}${Rk(diffs[bestIdx])}) e ${labels[worstIdx]} (${Rk(diffs[worstIdx])}).`;
+    alert.style.display = '';
+  }
+
+  buildFC(m);
+  buildSaldo(m);
+}
+
+function renderPipeline(m) {
+  document.getElementById('pipeline-metrics').innerHTML =
+    mc('RESULTADO ATUAL', (m.resultado<0?'−':'')+Rk(m.resultado), 'realizado', m.resultado>=0?'pos':'neg') +
+    mc('+ PIPELINE REC.', '+'+Rk(m.pipeline_rec), 'a confirmar', 'info') +
+    mc('− A PAGAR', '−'+Rk(m.a_pagar), 'compromissado', 'warn') +
+    mc('POSIÇÃO PROJETADA', Rk(m.resultado+m.pipeline_rec-m.a_pagar), 'se 100% converter', 'pos');
+
+  document.getElementById('pipeline-rec').innerHTML = `
+    <div class="pipe-row"><span class="pipe-badge badge-rec">SEGURO</span><span class="pipe-label">A receber — contratos</span><span class="pipe-val pos">${R(m.pipeline_receber)}</span></div>
+    <div class="pipe-row"><span class="pipe-badge badge-info">VERIFICAR</span><span class="pipe-label">Saldo contratos / Permutas</span><span class="pipe-val info">${R(m.pipeline_saldo)}</span></div>
+    <div class="pipe-row"><span class="pipe-badge badge-warn">CONCILIAR</span><span class="pipe-label">Conciliação Financeira</span><span class="pipe-val warn">${R(m.pipeline_conciliacao)}</span></div>
+    <div class="pipe-row"><span class="pipe-badge badge-warn">PROVISÓRIO</span><span class="pipe-label">Provisionar</span><span class="pipe-val warn">${R(m.pipeline_provisionar_rec)}</span></div>
+    <div class="pipe-row" style="background:rgba(255,255,255,.02)"><span class="pipe-badge" style="background:rgba(155,111,232,.1);color:var(--purple)">TOTAL</span><span class="pipe-label" style="font-weight:600">Pipeline total</span><span class="pipe-val purple" style="font-weight:700">${R(m.pipeline_rec)}</span></div>
+  `;
+
+  document.getElementById('pipeline-desp').innerHTML = `
+    <div class="pipe-row"><span class="pipe-badge badge-ris">URGENTE</span><span class="pipe-label">A pagar — aprovados</span><span class="pipe-val neg">${R(m.pipeline_pagar)}</span></div>
+    <div class="pipe-row"><span class="pipe-badge badge-warn">APROVAÇÃO</span><span class="pipe-label">Aguardando aprovação</span><span class="pipe-val warn">${R(m.pipeline_ag_aprov)}</span></div>
+    <div class="pipe-row"><span class="pipe-badge badge-warn">PROVISÓRIO</span><span class="pipe-label">Provisionar</span><span class="pipe-val warn">${R(m.pipeline_provisionar_desp)}</span></div>
+    <div class="pipe-row" style="background:rgba(255,255,255,.02)"><span class="pipe-badge badge-ris">TOTAL</span><span class="pipe-label" style="font-weight:600">Comprometido</span><span class="pipe-val neg" style="font-weight:700">${R(m.a_pagar)}</span></div>
+  `;
+
+  buildPipe(m);
+}
+
+function renderErros(erros) {
+  document.getElementById('erros-badge').textContent = erros.length;
+  const sevClass = {crit:'crit', war:'war', inf:'inf'};
+  document.getElementById('erros-content').innerHTML = erros.map(e => `
+    <div class="err-card ${sevClass[e.severity]}">
+      <div class="err-h">
+        <div class="err-name">${e.name}</div>
+        <span class="err-vol">${e.count} reg${e.valor?(' · '+Rk(e.valor)):''}</span>
+      </div>
+      <div class="err-desc">${e.desc}</div>
+      <div class="err-fix">${e.fix}</div>
+      ${e.cards.slice(0,5).map(c => `
+        <div class="err-card-item">
+          <span class="err-card-name" title="${c.title}">${c.title}</span>
+          <span class="err-card-val">${R(parseValor(getFieldValue(c, FIELD_MAP.valor)))}</span>
+          <span class="err-card-fix">${getFieldValue(c, e.fieldId) || '—'}</span>
+        </div>
+      `).join('')}
+      ${e.cards.length > 5 ? `<div style="font-size:10px;font-family:var(--fm);color:var(--text3);padding:4px 0 0">+${e.cards.length-5} cards adicionais</div>` : ''}
+    </div>
+  `).join('') || '<div class="alert-box alert-info">✓ Nenhum erro de classificação detectado nos cards atuais.</div>';
+}
+
+function renderConfig(pipeStruct, mappedFields, allFields) {
+  const phases = pipeStruct.pipe.phases;
+  document.getElementById('phases-count').textContent = `${phases.length} fases`;
+  document.getElementById('phases-list').innerHTML = phases.map(ph => `
+    <div class="phase-row">
+      <span class="phase-id">${ph.id}</span>
+      <span class="phase-name">${ph.name}</span>
+      <span class="phase-count">${ph.cards_count ?? '—'} cards</span>
+    </div>
+  `).join('');
+
+  document.getElementById('fields-count').textContent = `${allFields.length} campos`;
+  document.getElementById('fields-list').innerHTML = allFields.map(f => `
+    <div class="field-row">
+      <span class="field-id">${f.id}</span>
+      <span class="field-name">${f.label}</span>
+      <span class="field-type">${f.type||'—'}</span>
+    </div>
+  `).join('');
+
+  // Inputs manuais
+  const inputKeys = Object.keys(FIELD_MAP);
+  document.getElementById('field-map-inputs').innerHTML = inputKeys.map(k => `
+    <div>
+      <div style="font-size:9px;font-family:var(--fm);color:var(--text3);margin-bottom:3px">${k.toUpperCase()}</div>
+      <input type="text" id="fm_${k}" class="setup-input" value="${FIELD_MAP[k]||''}" style="font-size:10px;padding:5px 8px" placeholder="ID do campo">
+    </div>
+  `).join('');
+}
+
+function salvarMapeamento() {
+  Object.keys(FIELD_MAP).forEach(k => {
+    const el = document.getElementById('fm_' + k);
+    if (el) FIELD_MAP[k] = el.value.trim() || null;
+  });
+  localStorage.setItem('abp_field_map', JSON.stringify(FIELD_MAP));
+  setStatus('ok', 'Mapeamento salvo. Clique em Atualizar.');
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+const SOLAR='#E8A020',OK='#3DB87A',NG='#E85555',INFO='#4A9EE8',PUR='#9B6FE8';
+const gc='rgba(255,255,255,0.05)',tc='#5A5550',fm2='DM Mono';
+const meses=['Jan','Fev','Mar','Abr','Mai','Jun'];
+
+const baseTip={backgroundColor:'#222',titleColor:'#F0EDE8',bodyColor:'#A09A90',borderColor:'rgba(255,255,255,.1)',borderWidth:.5,
+  callbacks:{label:ctx=>' R$ '+Math.round(ctx.raw).toLocaleString('pt-BR')}};
+const baseScale={ticks:{color:tc,font:{size:10,family:fm2}},grid:{color:gc},border:{display:false}};
+const yScale={...baseScale,ticks:{...baseScale.ticks,callback:v=>'R$ '+Math.round(v/1000)+'K'}};
+
+function destroyChart(id) { if(charts[id]){charts[id].destroy();delete charts[id];} }
+
+function buildDonut(m) {
+  destroyChart('donut');
+  const cats=['Implantação / Operação','Pessoas','Estrutura e Administração','Aquisição de Clientes','Financeiro, Jurídico e Contábil','Tecnologia','Pós-venda e Suporte','Projeto e Engenharia'];
+  charts['donut'] = new Chart(document.getElementById('ch-donut'),{
+    type:'doughnut',
+    data:{labels:cats.map(c=>c.split('/')[0].trim()),datasets:[{
+      data:cats.map(c=>m.cat_totals[c]||0),
+      backgroundColor:[SOLAR,OK,INFO,NG,PUR,'#1ABC9C','#E67E22','#95A5A6'],
+      borderWidth:0,hoverOffset:5
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:700},
+      plugins:{legend:{position:'right',labels:{color:tc,font:{size:9,family:fm2},boxWidth:8,padding:5}},tooltip:baseTip}}
+  });
+}
+
+function buildMensal(m) {
+  destroyChart('mensal');
+  charts['mensal'] = new Chart(document.getElementById('ch-mensal'),{
+    type:'bar',
+    data:{labels:meses,datasets:[
+      {label:'Receitas',data:m.rec_mes,backgroundColor:'rgba(61,184,122,.75)',borderWidth:0,borderRadius:3},
+      {label:'Despesas',data:m.desp_mes,backgroundColor:'rgba(232,85,85,.75)',borderWidth:0,borderRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:700},
+      plugins:{legend:{labels:{color:tc,font:{size:10,family:fm2},boxWidth:9,padding:8}},tooltip:baseTip},
+      scales:{x:baseScale,y:yScale}}
+  });
+}
+
+function buildStack(m) {
+  destroyChart('stack');
+  const cats=['Implantação / Operação','Pessoas','Estrutura e Administração','Aquisição de Clientes','Financeiro, Jurídico e Contábil','Tecnologia'];
+  const colors=[SOLAR,OK,INFO,NG,PUR,'#1ABC9C'];
+  charts['stack'] = new Chart(document.getElementById('ch-stack'),{
+    type:'bar',
+    data:{labels:meses,datasets:cats.map((c,i)=>({
+      label:c.split('/')[0].trim(),data:m.cat_mes[c]||[0,0,0,0,0,0],
+      backgroundColor:colors[i],borderWidth:0,borderRadius:2
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:700},
+      plugins:{legend:{labels:{color:tc,font:{size:9,family:fm2},boxWidth:8,padding:6}},tooltip:baseTip},
+      scales:{x:{...baseScale,stacked:true},y:{...yScale,stacked:true}}}
+  });
+}
+
+function buildFC(m) {
+  destroyChart('fc');
+  charts['fc'] = new Chart(document.getElementById('ch-fc'),{
+    type:'bar',
+    data:{labels:meses,datasets:[
+      {label:'Receitas',data:m.rec_mes,backgroundColor:'rgba(61,184,122,.7)',borderWidth:0,borderRadius:3},
+      {label:'Despesas',data:m.desp_mes,backgroundColor:'rgba(232,85,85,.7)',borderWidth:0,borderRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:700},
+      plugins:{legend:{labels:{color:tc,font:{size:10,family:fm2},boxWidth:8,padding:8}},tooltip:baseTip},
+      scales:{x:baseScale,y:yScale}}
+  });
+}
+
+function buildSaldo(m) {
+  destroyChart('saldo');
+  charts['saldo'] = new Chart(document.getElementById('ch-saldo'),{
+    type:'line',
+    data:{labels:meses,datasets:[{
+      label:'Saldo acumulado',data:m.saldo_acum,
+      borderColor:SOLAR,backgroundColor:'rgba(232,160,32,.07)',
+      borderWidth:2,pointBackgroundColor:m.saldo_acum.map(v=>v>=0?OK:NG),pointRadius:4,fill:true,tension:.35
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:700},
+      plugins:{legend:{display:false},tooltip:baseTip},scales:{x:baseScale,y:yScale}}
+  });
+}
+
+function buildPipe(m) {
+  destroyChart('pipe');
+  charts['pipe'] = new Chart(document.getElementById('ch-pipe'),{
+    type:'bar',
+    data:{
+      labels:['A receber','Saldo contr.','Conciliação','A pagar','Ag. aprov.','Inadimpl.'],
+      datasets:[{
+        data:[m.pipeline_receber,m.pipeline_saldo,m.pipeline_conciliacao,-m.pipeline_pagar,-m.pipeline_ag_aprov,-m.inadimplencia],
+        backgroundColor:[OK,INFO,'rgba(232,160,32,.7)','rgba(232,85,85,.8)','rgba(232,85,85,.5)',NG],
+        borderWidth:0,borderRadius:4
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:700},
+      plugins:{legend:{display:false},tooltip:baseTip},scales:{x:baseScale,y:yScale}}
+  });
+}
+
+// ============================================================
+// STATUS
+// ============================================================
+function setStatus(state, msg) {
+  const dot = document.getElementById('status-dot');
+  const msgEl = document.getElementById('status-msg');
+  dot.className = 'status-dot' + (state==='ok'?' ok':state==='ng'?' ng':state==='loading'?' loading':'');
+  msgEl.textContent = msg;
+}
+
+function setChip(state, text) {
+  const chip = document.getElementById('status-chip');
+  chip.className = 'chip ' + (state==='ok'?'chip-ok':state==='ng'?'chip-ng':state==='loading'?'chip-warn':'chip-info');
+  chip.textContent = text;
+}
+
+// ============================================================
+// MAIN FLOW
+// ============================================================
+async function iniciarApp() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = '';
+  await carregarDados();
+}
+
+async function carregarDados() {
+  const btn = document.getElementById('btn-atualizar');
+  btn.disabled = true;
+  setStatus('loading', 'Conectando ao Pipefy...');
+  setChip('loading', '● carregando');
+
+  document.getElementById('visao-loader').style.display = '';
+  document.getElementById('visao-content').style.display = 'none';
+
+  try {
+    // 1. Estrutura do pipe
+    setStatus('loading', 'Buscando estrutura do pipe...');
+    pipeData = await fetchPipeStructure();
+
+    const { mapped, allFields } = autoMapFields(pipeData);
+
+    // Só atualiza o mapa se não tiver salvo manualmente
+    const savedMap = JSON.parse(localStorage.getItem('abp_field_map') || 'null');
+    if (!savedMap) {
+      Object.assign(FIELD_MAP, mapped);
+    }
+
+    // Atualiza header
+    document.getElementById('hdr-sub').textContent = `${pipeData.pipe.name} · Pipe ${PIPE_ID}`;
+
+    // 2. Todos os cards
+    allCards = await fetchAllCards();
+    setStatus('loading', `Processando ${allCards.length} cards...`);
+
+    // 3. Processa
+    const proc = processCards(allCards);
+    const metrics = calcMetrics(proc);
+    const erros = detectErrors(allCards);
+
+    // 4. Renderiza
+    renderVisao(metrics);
+    renderDRE(metrics);
+    renderFluxo(metrics);
+    renderPipeline(metrics);
+    renderErros(erros);
+    renderConfig(pipeData, mapped, allFields);
+
+    document.getElementById('visao-loader').style.display = 'none';
+    document.getElementById('visao-content').style.display = '';
+
+    const now = new Date().toLocaleTimeString('pt-BR');
+    document.getElementById('last-update').textContent = `Atualizado: ${now} · ${allCards.length} cards`;
+    setStatus('ok', `${allCards.length} cards carregados · ${erros.length} alertas de classificação`);
+    setChip('ok', '● conectado');
+
+  } catch(e) {
+    setStatus('ng', 'Erro: ' + e.message);
+    setChip('ng', '● erro');
+    console.error(e);
+
+    document.getElementById('visao-loader').innerHTML = `
+      <div style="text-align:center">
+        <div style="font-size:24px;margin-bottom:12px">⚠️</div>
+        <div style="font-size:13px;color:var(--ng);margin-bottom:8px">Erro ao conectar</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--fm);margin-bottom:14px">${e.message}</div>
+        <div style="font-size:11px;color:var(--text2);max-width:380px;line-height:1.6">
+          Verifique se o token está correto e se o pipe ID <strong>${PIPE_ID}</strong> está acessível com esse token.<br><br>
+          Se estiver abrindo o arquivo diretamente (file://), o browser pode bloquear o CORS. 
+          Use um servidor local: <code style="font-family:var(--fm);color:var(--solar)">python3 -m http.server 8080</code> e acesse via http://localhost:8080
+        </div>
+      </div>
+    `;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ============================================================
+// TABS
+// ============================================================
+const TAB_NAMES = ['visao','dre','fluxo','pipeline','erros','config'];
+function sw(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', TAB_NAMES[i] === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = () => {
+  const saved = localStorage.getItem('abp_token');
+  if (saved) {
+    document.getElementById('token-input').value = saved;
+    document.getElementById('pipe-input').value = localStorage.getItem('abp_pipe_id') || PIPE_ID_DEFAULT;
+  }
+};
+</script>
+</body></html>
