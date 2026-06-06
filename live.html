@@ -386,11 +386,31 @@ function parseVal(v) {
   if (!v) return 0;
   return parseFloat(String(v).replace(/[R$\s.]/g,'').replace(',','.')) || 0;
 }
+function parseDate(card) {
+  const tipo = fv(card, FM.tipo_lanc) || '';
+  const isRec = tipo.toLowerCase().includes('receber');
+  const isTaxa = card.current_phase?.id === FASES.TAXA_CARTAO;
+
+  let dateStr;
+  if (isRec || isTaxa) {
+    // Receitas: data de confirmação do recebimento
+    dateStr = fv(card, FM.data_confirm);
+  } else {
+    // Despesas: prioridade = data de competência, fallback = data de agendamento
+    const comp = fv(card, FM.data_comp);
+    const pag  = fv(card, FM.data_pag);
+    dateStr = (comp && comp.trim()) ? comp : pag;
+  }
+  if (!dateStr) return null;
+  return new Date(dateStr);
+}
+
 function parseMonth(card) {
-  const dc = fv(card, FM.data_confirm);
-  const dp = fv(card, FM.data_pag);
-  const d = new Date(dc || dp || '');
-  return isNaN(d) ? null : d.getMonth(); // 0-indexed
+  const d = parseDate(card);
+  if (!d || isNaN(d)) return null;
+  // Filtro: apenas 2026
+  if (d.getFullYear() !== 2026) return null;
+  return d.getMonth(); // 0-indexed
 }
 
 // ============================================================
@@ -444,7 +464,7 @@ function calcMetrics(proc) {
     return tc.toLowerCase().includes(tipo.toLowerCase());
   }).reduce((a, c) => a + c._valor, 0);
 
-  // Descobre meses com dados
+  // Descobre meses com dados (apenas 2026 — filtrado em parseMonth)
   const mesesSet = new Set();
   [...proc.rec_conc, ...proc.desp_conc].forEach(c => { if (c._mes !== null) mesesSet.add(c._mes); });
   const meses = Array.from(mesesSet).sort((a, b) => a - b);
@@ -1021,7 +1041,7 @@ async function carregarDados() {
     metrics = calcMetrics(proc);
 
     document.getElementById('hdr-sub').textContent =
-      `Pipe ${PIPE_ID} · ${allCards.length} cards · atualizado ${new Date().toLocaleTimeString('pt-BR')}`;
+      `Pipe ${PIPE_ID} · ${allCards.length} cards · 2026 · atualizado ${new Date().toLocaleTimeString('pt-BR')}`;
     document.getElementById('slast').textContent = new Date().toLocaleString('pt-BR');
 
     // Render tudo
