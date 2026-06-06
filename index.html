@@ -107,6 +107,21 @@ canvas{width:100%!important}
 
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* CARDS DE ERRO COM ID */
+.err-cards-list{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+.err-ci{display:grid;grid-template-columns:105px 1fr auto auto;align-items:center;gap:8px;background:var(--bg3);border-radius:5px;padding:5px 10px;font-size:10px}
+.err-ci-id{font-family:var(--fm);color:var(--solar);text-decoration:none;cursor:pointer;white-space:nowrap}
+.err-ci-id:hover{text-decoration:underline}
+.err-ci-desc{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.err-ci-val{font-family:var(--fm);color:var(--text3);white-space:nowrap;text-align:right}
+.err-ci-fix{font-size:9px;font-family:var(--fm);padding:1px 6px;border-radius:3px;white-space:nowrap;text-align:right}
+.fix-dir{background:rgba(61,184,122,.1);color:var(--ok)}
+.fix-ind{background:rgba(74,158,232,.1);color:var(--info)}
+.fix-est{background:rgba(90,85,80,.2);color:var(--text3)}
+.fix-warn{background:rgba(232,160,32,.1);color:var(--solar)}
+.fix-ok{background:rgba(61,184,122,.07);color:var(--text3)}
+
 </style>
 </head><body>
 
@@ -332,55 +347,88 @@ canvas{width:100%!important}
 
 <!-- ==================== ERROS ==================== -->
 <div id="p-erros" class="panel">
-  <div style="font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:12px">INCONSISTÊNCIAS DETECTADAS — CLASSIFICAÇÃO</div>
+  <div style="font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:4px">INCONSISTÊNCIAS DETECTADAS — CLASSIFICAÇÃO · BASE: EXCEL 06/06/2026</div>
+  <div style="font-size:10px;font-family:var(--fm);color:var(--text3);margin-bottom:14px">Clique no ID para abrir o card no Pipefy</div>
 
+  <!-- ERRO 1 -->
   <div class="err-card crit">
-    <div class="err-h"><div class="err-name">Tipo de Custo inválido: "Variável" e "Fixa"</div><span class="err-vol">16 registros</span></div>
-    <div class="err-desc">Não existem no modelo ABP. Exemplos: Cabo de cobre (Variável), Localiza (Fixa), Treinamento NR35 (Variável), Jurídico (Fixa). Quebram análise de margem.</div>
-    <div class="err-fix">→ Reclassificar: rastreável a contrato = Direto · compartilhado = Indireto · existe sem contrato = Estrutural</div>
+    <div class="err-h">
+      <div class="err-name">⛔ Tipo de Custo inválido: "Variável" ou "Fixa"</div>
+      <span class="err-vol">17 cards · R$ 14.441</span>
+    </div>
+    <div class="err-desc">Não existem no modelo ABP. Quebram qualquer análise de margem. O sistema não sabe classificar esses custos como Direto, Indireto ou Estrutural.</div>
+    <div class="err-fix">→ Regra: rastreável a contrato = Direto · compartilhado entre obras = Indireto Compartilhado · existe mesmo sem obra = Estrutural</div>
+    <div class="err-cards-list" id="e1-list"></div>
   </div>
 
+  <!-- ERRO 2 -->
   <div class="err-card crit">
-    <div class="err-h"><div class="err-name">Centros de Custo fora do modelo: "Materiais", "Contratos", "Pessoas"</div><span class="err-vol">10 reg · R$ 10,9K</span></div>
-    <div class="err-desc">Modelo aceita: Administrativo, Comercial, Engenharia, Operação, Frota.</div>
+    <div class="err-h">
+      <div class="err-name">⛔ Centros de Custo fora do modelo</div>
+      <span class="err-vol">10 cards · R$ 10.941</span>
+    </div>
+    <div class="err-desc">Centros encontrados: "Materiais", "Contratos", "Pessoas". Não existem. Centros válidos: Administrativo · Comercial · Engenharia · Operação · Frota.</div>
     <div class="err-fix">→ Materiais → Operação · Contratos → Operação · Pessoas → Administrativo</div>
+    <div class="err-cards-list" id="e2-list"></div>
   </div>
 
+  <!-- ERRO 3 -->
   <div class="err-card war">
-    <div class="err-h"><div class="err-name">Implantação/Operação com Tipo Estrutural</div><span class="err-vol">61 reg · R$ 56,9K</span></div>
-    <div class="err-desc">Material/ativo operacional classificado como Estrutural. Fica fora do CPV — não aparece na margem do contrato. Inclui Equipamentos (R$ 30K), Logística (R$ 13K) e EPIs (R$ 9,4K).</div>
-    <div class="err-fix">→ Revisar item a item: rastreável a obra = Direto · compartilhado entre obras = Indireto Compartilhado</div>
+    <div class="err-h">
+      <div class="err-name">⚠ Implantação/Operação com Tipo Estrutural</div>
+      <span class="err-vol">47 cards · R$ 56.900</span>
+    </div>
+    <div class="err-desc">Material ou ativo operacional classificado como Estrutural. Fica completamente fora do CPV — invisível na margem do contrato. Inclui Empilhadeiras (R$ 17,6K), Fretes (R$ 12,6K), Drone (R$ 6,9K), Ferramentas diversas.</div>
+    <div class="err-fix">→ Revisar item a item: serve uma obra? = Direto · serve várias? = Indireto Compartilhado</div>
+    <div class="err-cards-list" id="e3-list"></div>
   </div>
 
+  <!-- ERRO 4 -->
   <div class="err-card war">
-    <div class="err-h"><div class="err-name">EPIs como Estrutural</div><span class="err-vol">22 reg · R$ 9,4K</span></div>
-    <div class="err-desc">EPI é custo operacional. Como Estrutural, sai da margem bruta e infla artificialmente o resultado do contrato.</div>
-    <div class="err-fix">→ EPI por obra específica = Direto · EPI compartilhado entre equipes = Indireto Compartilhado</div>
+    <div class="err-h">
+      <div class="err-name">⚠ EPIs classificados como Estrutural</div>
+      <span class="err-vol">21 cards · R$ 9.430</span>
+    </div>
+    <div class="err-desc">EPI é custo operacional rastreável à equipe ou obra. Como Estrutural, sai da margem bruta — inflando artificialmente o resultado dos contratos.</div>
+    <div class="err-fix">→ EPI para obra específica = Direto · EPI compartilhado entre equipes = Indireto Compartilhado · EPI de admissão (novo func) pode ser Estrutural</div>
+    <div class="err-cards-list" id="e4-list"></div>
   </div>
 
+  <!-- ERRO 5 -->
   <div class="err-card war">
-    <div class="err-h"><div class="err-name">Drone Termográfico: parcelas como Despesa do Mês</div><span class="err-vol">3 parcelas · R$ 13,4K</span></div>
-    <div class="err-desc">Ativo depreciável (parcelas 5/10, 6/10, 7/10) lançado como despesa corrente. Distorce EBITDA mensal.</div>
-    <div class="err-fix">→ Alterar Tipo de Apropriação para Ativo / Investimento nas 3 parcelas</div>
+    <div class="err-h">
+      <div class="err-name">⚠ Caixas de papelão: 3 configurações diferentes no mesmo parcelamento</div>
+      <span class="err-vol">5 cards · R$ 11.160</span>
+    </div>
+    <div class="err-desc">Mesma compra parcelada usa Estoque em 2 parcelas e Despesa do Mês nas outras 2. Centro muda entre Administrativo e Operação entre as parcelas. A fita gomada associada também está como Despesa do Mês.</div>
+    <div class="err-fix">→ Padronizar todas as parcelas: Estoque + Administrativo + Estrutural</div>
+    <div class="err-cards-list" id="e6-list"></div>
   </div>
 
+  <!-- ERRO 6 -->
   <div class="err-card war">
-    <div class="err-h"><div class="err-name">Caixas de papelão: 3 configurações diferentes para o mesmo parcelamento</div><span class="err-vol">4 parcelas · R$ 11,7K</span></div>
-    <div class="err-desc">Mesma compra parcelada mistura Estoque e Despesa do Mês, e muda centro entre Administrativo e Operação.</div>
-    <div class="err-fix">→ Padronizar todas as parcelas: Estoque + Administrativo</div>
+    <div class="err-h">
+      <div class="err-name">⚠ Ventiladores: 3 tipos de custo diferentes nas parcelas do mesmo produto</div>
+      <span class="err-vol">4 cards · R$ 4.593</span>
+    </div>
+    <div class="err-desc">Parcela 01/03 = Direto/ATIVOS. Parcelas 2/3 = Estrutural/Mat.Elétricos. Outras = Indireto/Mat.Elétricos. Atenção: cards 1343725715 e 1326938406 têm valores iguais (R$1.649) — possível duplicata.</div>
+    <div class="err-fix">→ Definir: é ativo operacional? → Ativo/Investimento + Indireto Compartilhado, padronizar em todas as parcelas</div>
+    <div class="err-cards-list" id="e7-list"></div>
   </div>
 
+  <!-- ERRO 7 -->
   <div class="err-card inf">
-    <div class="err-h"><div class="err-name">321 lançamentos Diretos sem código de contrato</div><span class="err-vol">321 registros</span></div>
-    <div class="err-desc">Tipo = Direto mas Contrato/Destino vazio ou genérico. Impossível calcular margem por obra — objetivo central do modelo ABP.</div>
-    <div class="err-fix">→ Vincular ao código P1184, P1452... no campo Contrato/Destino</div>
+    <div class="err-h">
+      <div class="err-name">ℹ 321 lançamentos Diretos sem código de contrato</div>
+      <span class="err-vol">321 cards · R$ 1,68M</span>
+    </div>
+    <div class="err-desc">Tipo = Direto mas campo Contrato/Destino está preenchido com "Estoque", "Contrato" (genérico) ou vazio. <strong>Este é o maior problema do modelo:</strong> R$ 1,68M de custos supostamente diretos que não podem ser rastreados a nenhum projeto. Margem por obra é impossível de calcular.</div>
+    <div class="err-fix">→ Prioridade: vincular os 20 maiores (abaixo) ao código do projeto (P1425, P1472...). Juntos somam R$ 1,27M = 76% do problema.</div>
+    <div style="font-size:10px;font-family:var(--fm);color:var(--text3);padding:8px 0 4px">TOP 20 POR VALOR (de 321):</div>
+    <div class="err-cards-list" id="e8-list"></div>
   </div>
+</div>
 
-  <div class="err-card inf">
-    <div class="err-h"><div class="err-name">Implantação/Op + Estoque + Estrutural (contradição lógica)</div><span class="err-vol">20 reg · R$ 9,1K</span></div>
-    <div class="err-desc">Material operacional em estoque não pode ser Estrutural. Estrutural = existe sem contrato nenhum.</div>
-    <div class="err-fix">→ Manter Estoque, corrigir Tipo para Direto ou Indireto Compartilhado</div>
-  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -805,7 +853,159 @@ function sw(id) {
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===id));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('p-'+id).classList.add('active');
-  if(!builtTabs[id]){builtTabs[id]=1;setTimeout(()=>buildCharts(id),50);}
+  if(!builtTabs[id]){builtTabs[id]=1;if(id==='erros')renderAllErros();else setTimeout(()=>buildCharts(id),50);}
+}
+
+
+// ============================================================
+// DADOS DE ERROS COM IDs REAIS
+// ============================================================
+const ERROS = {
+  e1: [
+    {id:"1266064276",desc:"Cabo de Cobre Flexível 6,00MM 3/3",valor:1387.26,fix:"Indireto Compartilhado",fc:"ind"},
+    {id:"1259889302",desc:"Cabo de Recarga Plug Type 2 Trifásico 380V",valor:2326.84,fix:"Direto (se eletroposto específico)",fc:"dir"},
+    {id:"1222051069",desc:"E0007 - Repasse Churrascaria Bom Boi",valor:496.78,fix:"Direto",fc:"dir"},
+    {id:"1194553267",desc:"E0007 - Repasse Churrascaria Bom Boi",valor:361.02,fix:"Direto",fc:"dir"},
+    {id:"1222049616",desc:"E0007 - Repasse Churrascaria Bom Boi",valor:59.09,fix:"Direto",fc:"dir"},
+    {id:"1194552257",desc:"E0007 - Repasse Churrascaria Bom Boi",valor:91.76,fix:"Direto",fc:"dir"},
+    {id:"1223527286",desc:"Frota - Lavagem Carro 05 Uno FOK2E67",valor:40.0,fix:"Estrutural",fc:"est"},
+    {id:"1223578738",desc:"Frota - Lavagem Carro 06 Uno FVO7J20",valor:40.0,fix:"Estrutural",fc:"est"},
+    {id:"1223535904",desc:"Frota - Lavagem Reboque FXJ9D55",valor:110.0,fix:"Estrutural",fc:"est"},
+    {id:"1275001531",desc:"Jurídico Janeiro/2026",valor:1650.0,fix:"Estrutural",fc:"est"},
+    {id:"1274963954",desc:"Localiza - Dezembro/2025",valor:2111.24,fix:"Estrutural",fc:"est"},
+    {id:"1274201634",desc:"P1425-Grifit - Hospedagem 05/01/26",valor:780.0,fix:"Direto",fc:"dir"},
+    {id:"1274807129",desc:"Pagamento Férias - Rogério Fernandes Máximo",valor:3463.30,fix:"Estrutural",fc:"est"},
+    {id:"1184516841",desc:"R$40.000 em 10x",valor:1288.0,fix:"Verificar categoria",fc:"warn"},
+    {id:"1275028542",desc:"Reembolso Pedágio 30/12 - Carlos H. de Souza",valor:73.20,fix:"Estrutural",fc:"est"},
+    {id:"1274941584",desc:"Reunião Hotel Olavo Bilac - Estacionamento",valor:180.0,fix:"Estrutural",fc:"est"},
+    {id:"1274415345",desc:"Treinamento NR35 - Janeiro/2026",valor:250.0,fix:"Estrutural",fc:"est"},
+  ],
+  e2: [
+    {id:"1266064276",desc:"Cabo de Cobre Flexível 6,00MM",valor:1387.26,fix:"CC → Operação",fc:"warn"},
+    {id:"1259889302",desc:"Cabo de Recarga Plug Type 2 Trifásico",valor:2326.84,fix:"CC → Operação",fc:"warn"},
+    {id:"1222051069",desc:"E0007 - Repasse Churrascaria Bom Boi",valor:496.78,fix:"CC → Operação",fc:"warn"},
+    {id:"1194553267",desc:"E0007 - Repasse Churrascaria Bom Boi",valor:361.02,fix:"CC → Operação",fc:"warn"},
+    {id:"1222049616",desc:"E0007 - Repasse Churrascaria Bom Boi",valor:59.09,fix:"CC → Operação",fc:"warn"},
+    {id:"1194552257",desc:"E0007 - Repasse Churrascaria Bom Boi",valor:91.76,fix:"CC → Operação",fc:"warn"},
+    {id:"1277432342",desc:"Insumos Elétricos Grifit - FRETE ANDRA",valor:1650.0,fix:"CC → Operação",fc:"warn"},
+    {id:"1277300805",desc:"Interruptor Diferencial Tetra 80A",valor:251.97,fix:"CC → Operação",fc:"warn"},
+    {id:"1274201634",desc:"P1425-Grifit - Hospedagem 05/01/26",valor:780.0,fix:"CC → Operação",fc:"warn"},
+    {id:"1274807129",desc:"Pagamento Férias - Rogério Fernandes Máximo",valor:3463.30,fix:"CC → Administrativo",fc:"warn"},
+  ],
+  e3: [
+    {id:"1319846005",desc:"Estoque GFV FEV 2 - FRETE",valor:10000.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1313281457",desc:"Empilhadeira 04/08",valor:5865.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1278634671",desc:"Empilhadeira 2/8",valor:5865.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1296110745",desc:"Empilhadeira 3/8",valor:5865.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1281942880",desc:"Arqueadora Esticadora Tensionadora de Fita",valor:4654.45,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1309856532",desc:"Drone DJI Mini RC-N1 - DJI038",valor:3234.99,fix:"→ Indireto + Ativo/Inv",fc:"warn"},
+    {id:"1307012100",desc:"Drone DJI Mini RC-N1 - DJI038",valor:3650.0,fix:"→ Indireto + Ativo/Inv",fc:"warn"},
+    {id:"1296994961",desc:"Prolongador de Garfo 2500kg/1.80M",valor:2060.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1322425228",desc:"Kit Parafusadeira/Martelete/Lixadeira",valor:1649.9,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1338067045",desc:"Estrutura Solo - Frete",valor:1350.0,fix:"→ Direto (se obra específica)",fc:"dir"},
+    {id:"1317908672",desc:"Ferramentas para Limpeza",valor:1332.5,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1265937847",desc:"8 - Quadro de comando 300x300x200 2/2",valor:555.2,fix:"→ Direto",fc:"dir"},
+    {id:"1284589373",desc:"Bomba de limpeza de placas",valor:664.22,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1345874115",desc:"Estrutura String 200 módulos - frete",valor:989.1,fix:"→ Direto (se obra específica)",fc:"dir"},
+    {id:"1325193196",desc:"Aluguel Andaime e rompedor para o Galpão",valor:322.4,fix:"→ Direto",fc:"dir"},
+    {id:"1290378854",desc:"Tupinamba Energia - FEV/2026",valor:372.0,fix:"→ Direto",fc:"dir"},
+    {id:"1277246660",desc:"Tupinamba Energia - JAN/2026",valor:372.0,fix:"→ Direto",fc:"dir"},
+    {id:"1304552829",desc:"Tupinamba Energia - MAR/2026",valor:372.0,fix:"→ Direto",fc:"dir"},
+    {id:"1325781081",desc:"Placa Carregadores - Parque Campos do Jordão",valor:325.0,fix:"→ Direto",fc:"dir"},
+    {id:"1333665065",desc:"Placa Eletroposto - Quitanda Izu",valor:630.0,fix:"→ Direto",fc:"dir"},
+  ],
+  e4: [
+    {id:"1313058787",desc:"EPI operação - 1/2",valor:1889.5,fix:"→ Direto ou Indireto",fc:"warn"},
+    {id:"1313059838",desc:"EPI opereção - 2/2",valor:1889.5,fix:"→ Direto ou Indireto",fc:"warn"},
+    {id:"1285101932",desc:"17x Capacete branco EPI com jugular",valor:1155.24,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1325521947",desc:"8 - Capacete 3 pontos com jugular",valor:839.36,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1295040012",desc:"14x Luva Anticorte + Bota n40",valor:450.6,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1318488369",desc:"Calça - EX - 10 unidades",valor:305.4,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1290972472",desc:"Epi de lavagem",valor:306.3,fix:"→ Direto (lavagem específica)",fc:"dir"},
+    {id:"1300760847",desc:"Botas Operação",valor:300.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1342483470",desc:"Botas Nº 40/41/43",valor:300.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1316524741",desc:"Botas de borracha",valor:267.39,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1327418767",desc:"EPI (botas)",valor:240.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1317907650",desc:"Botas Pessoal Operação",valor:224.5,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1308491307",desc:"6 - Mochila de EPI",valor:246.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1290974880",desc:"1x Bota n41 (Operação)",valor:132.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1352467379",desc:"Bota de Segurança - Funcionário Novo",valor:137.9,fix:"→ Estrutural OK (admissão)",fc:"est"},
+    {id:"1313063580",desc:"EPI botas - 1/2",valor:150.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1313065595",desc:"EPI BOTAS - 2/2",valor:150.0,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1341342471",desc:"3x Óculos UV + protetor - OP SANTUARIO",valor:63.5,fix:"→ Direto (obra Santuário)",fc:"dir"},
+    {id:"1342481272",desc:"Epi equipe Aparecida",valor:63.5,fix:"→ Direto (obra Aparecida)",fc:"dir"},
+    {id:"1336548805",desc:"Óculos escuro UV - 30 unidades",valor:119.67,fix:"→ Indireto Compartilhado",fc:"ind"},
+    {id:"1296620267",desc:"6 cadeados para Nichos Equipes",valor:194.64,fix:"→ Indireto Compartilhado",fc:"ind"},
+  ],
+  e6: [
+    {id:"1309765213",desc:"1000 caixas Papelão - Entrada",valor:2190.0,fix:"Despesa→Estoque / Operação→Adm",fc:"warn"},
+    {id:"1335863205",desc:"1000 caixas Papelão - parc 01/3",valor:2911.04,fix:"Despesa→Estoque",fc:"warn"},
+    {id:"1335864506",desc:"1000 caixas Papelão - 02/03",valor:2911.04,fix:"Consistente ✓",fc:"ok"},
+    {id:"1335865404",desc:"1000 caixas Papelão - 03/03",valor:2911.04,fix:"Consistente ✓",fc:"ok"},
+    {id:"1358003828",desc:"15 Fita gomada - Lacre p/ caixa de papelão",valor:235.17,fix:"Despesa→Estoque",fc:"warn"},
+  ],
+  e7: [
+    {id:"1326934366",desc:"Ventilador 120x120 - parc 01/03",valor:647.78,fix:"Definir ativo → Ativo/Inv + Indireto",fc:"warn"},
+    {id:"1343714494",desc:"Ventilador 120x120 - 2/3",valor:647.79,fix:"Estrutural→Indireto Compartilhado",fc:"ind"},
+    {id:"1343725715",desc:"Ventilador 120x120 - 2/3 ⚠ duplicata?",valor:1649.03,fix:"Verificar se duplicata",fc:"warn"},
+    {id:"1326938406",desc:"Ventilador 120x120",valor:1649.02,fix:"Padronizar subcategoria",fc:"warn"},
+  ],
+  e8: [
+    {id:"1299781965",desc:"Estoque FEV 1 - ENTRADA 50%",valor:320303.16,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1304503398",desc:"Estoque GFV FEV 2 - entrada 50%",valor:285342.82,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1325765080",desc:"Estoque - Inversores Strings",valor:167836.30,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1269415552",desc:"Estoque Dezembro 2025 - 3ª parcela",valor:101306.90,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1269412485",desc:"Estoque Dezembro 2025 - 2ª parcela",valor:101306.90,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1320083062",desc:"Estoque FEV 1 - REF 2 Parcela NF 10386",valor:96843.22,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1320083705",desc:"Estoque FEV 1 - REF 3 Parcela NF 10386",valor:96843.21,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1320086434",desc:"Estoque GFV FEV 2 - REF 2 Parcela NF 9549",valor:89486.65,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1313159570",desc:"P1472-Hortifruti Oratório - Reembolso ajuste",valor:57681.82,fix:"Vincular código P1472",fc:"warn"},
+    {id:"1356022109",desc:"P1522 - Distrato contratual",valor:38431.08,fix:"Vincular código P1522",fc:"warn"},
+    {id:"1303930299",desc:"Cabo Solar 4mm PT VM 1000 VD - 3000m",valor:22400.0,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1338068297",desc:"Estrutura Solo",valor:16764.97,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1344423127",desc:"Estrutura String 200 módulos NF 17358",valor:15357.0,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1296535076",desc:"P1425-Grifit - Instalação TP e TC",valor:12000.0,fix:"Vincular P1425",fc:"warn"},
+    {id:"1278823998",desc:"Frete Gerador Estoque Dezembro 2025",valor:10700.0,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1307416460",desc:"Reembolso erro conexão - P1375",valor:10283.04,fix:"Vincular P1375",fc:"warn"},
+    {id:"1281928118",desc:"P1425-Grifit - Locação de munck",valor:10080.0,fix:"Vincular P1425",fc:"warn"},
+    {id:"1289298311",desc:"P1251-Dalmo Adriano - Distrato/Devolução",valor:8550.0,fix:"Vincular P1251",fc:"warn"},
+    {id:"1301534803",desc:"Insumos Elétricos Estoque FEV/26 1/3",valor:9339.6,fix:"Vincular ao projeto",fc:"warn"},
+    {id:"1278819445",desc:"P1425-Grifit - Frete Carreta",valor:9250.0,fix:"Vincular P1425",fc:"warn"},
+  ],
+};
+
+const PIPE_ID_ERROS = '1073359';
+function pipeUrl(cardId) {
+  return `https://app.pipefy.com/pipes/${PIPE_ID_ERROS}?card_id=${cardId}`;
+}
+
+function fmtV(v) {
+  if(v>=1000) return 'R$ '+Math.round(v/1000)+'K';
+  return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+function renderErroList(elId, cards) {
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = cards.map(c => `
+    <div class="err-ci">
+      <a class="err-ci-id" href="${pipeUrl(c.id)}" target="_blank" title="Abrir no Pipefy">#${c.id}</a>
+      <span class="err-ci-desc" title="${c.desc}">${c.desc}</span>
+      <span class="err-ci-val">${fmtV(c.valor)}</span>
+      <span class="err-ci-fix fix-${c.fc||'warn'}">${c.fix}</span>
+    </div>
+  `).join('');
+}
+
+// Renderiza ao carregar a aba de erros
+function renderAllErros() {
+  renderErroList('e1-list', ERROS.e1);
+  renderErroList('e2-list', ERROS.e2);
+  renderErroList('e3-list', ERROS.e3);
+  renderErroList('e4-list', ERROS.e4);
+  renderErroList('e6-list', ERROS.e6);
+  renderErroList('e7-list', ERROS.e7);
+  renderErroList('e8-list', ERROS.e8);
 }
 
 // ============================================================
