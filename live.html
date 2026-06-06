@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>ABP Solar · Live</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --solar:#E8A020;--solar-bg:rgba(232,160,32,0.07);
+  --bg:#0F0F0F;--bg2:#181818;--bg3:#222;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#F0EDE8;--text2:#A09A90;--text3:#5A5550;
+  --ok:#3DB87A;--ng:#E85555;--info:#4A9EE8;--purple:#9B6FE8;
+  --r:10px;--fd:'Syne',sans-serif;--fm:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--fd);min-height:100vh}
+
+/* SETUP */
+.setup{max-width:500px;margin:60px auto;padding:0 20px}
+.setup-card{background:var(--bg2);border:.5px solid var(--border2);border-radius:14px;padding:28px}
+.setup-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.setup-sub{font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.lbl{font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:5px}
+.inp{width:100%;background:var(--bg3);border:.5px solid var(--border2);border-radius:7px;padding:9px 12px;font-size:11px;font-family:var(--fm);color:var(--text);outline:none;transition:border-color .15s;margin-bottom:12px}
+.inp:focus{border-color:var(--solar)}
+.btn{font-size:11px;font-family:var(--fm);font-weight:600;padding:8px 18px;border-radius:7px;border:none;cursor:pointer;transition:all .15s}
+.btn-p{background:var(--solar);color:#0F0F0F}.btn-p:hover{background:#f0a820}
+.btn-p:disabled{background:#444;color:#666;cursor:not-allowed}
+.btn-g{background:var(--bg3);color:var(--text2);border:.5px solid var(--border2)}.btn-g:hover{color:var(--text)}
+.btn-sm{font-size:10px;padding:4px 12px;border-radius:5px}
+.hint{font-size:10px;color:var(--text3);margin-top:10px;font-family:var(--fm);line-height:1.6}
+.hint a{color:var(--solar);text-decoration:none}
+.err-setup{background:rgba(232,85,85,.08);border:.5px solid rgba(232,85,85,.2);color:#E89090;border-radius:7px;padding:10px 12px;font-size:11px;margin-top:12px;display:none}
+
+/* HEADER */
+.hdr{padding:12px 20px;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-ic{width:26px;height:26px;background:var(--solar);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.logo-t{font-size:12px;font-weight:700;letter-spacing:.1em}
+.logo-s{font-size:10px;color:var(--text3);font-family:var(--fm)}
+.hdr-r{display:flex;align-items:center;gap:8px}
+.chip{font-size:10px;font-family:var(--fm);padding:3px 8px;border-radius:4px}
+.chip-ok{background:rgba(61,184,122,.1);color:var(--ok)}
+.chip-ng{background:rgba(232,85,85,.1);color:var(--ng)}
+.chip-warn{background:var(--solar-bg);color:var(--solar)}
+
+/* STATUS */
+.sbar{display:flex;align-items:center;gap:8px;padding:7px 20px;border-bottom:.5px solid var(--border);font-size:10px;font-family:var(--fm);color:var(--text3)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot-ok{background:var(--ok)}.dot-ng{background:var(--ng)}
+.dot-load{background:var(--solar);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* TABS */
+.tabs{display:flex;border-bottom:.5px solid var(--border);overflow-x:auto}
+.tab{padding:9px 14px;font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--text2)}.tab.active{color:var(--solar);border-bottom-color:var(--solar)}
+.panel{display:none;padding:16px 20px}.panel.active{display:block}
+
+/* LOADER */
+.ld{display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:12px}
+.spin{width:26px;height:26px;border:2px solid var(--border2);border-top-color:var(--solar);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-msg{font-size:11px;font-family:var(--fm);color:var(--text3)}
+
+/* MÉTRICAS */
+.mrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-bottom:14px}
+.mc{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:11px 12px}
+.mc.hl{border-color:rgba(232,160,32,.35)}
+.mc-l{font-size:9px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:4px}
+.mc-v{font-size:17px;font-weight:700;line-height:1}
+.mc-s{font-size:9px;color:var(--text3);margin-top:4px;font-family:var(--fm)}
+.pos{color:var(--ok)}.neg{color:var(--ng)}.warn{color:var(--solar)}.info{color:var(--info)}.purple{color:var(--purple)}
+
+/* MES SELECTOR */
+.mes-bar{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.mb{font-size:10px;font-family:var(--fm);padding:4px 11px;border-radius:5px;border:.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;transition:all .15s}
+.mb:hover{color:var(--text2)}.mb.active{background:var(--solar);color:#0F0F0F;border-color:var(--solar);font-weight:700}
+.mb.all{border-color:rgba(155,111,232,.4);color:var(--purple)}
+.mb.all.active{background:var(--purple);border-color:var(--purple);color:#fff}
+
+/* DRE */
+.dre-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.dre-wrap{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px;min-width:420px}
+.dr{display:grid;border-bottom:.5px solid var(--border);font-size:11px;transition:background .1s}
+.dr:last-child{border-bottom:none}
+.dr:hover{background:rgba(255,255,255,.015)}
+.dr.hdr-row{font-size:9px;font-family:var(--fm);color:var(--text3);letter-spacing:.07em;border-bottom:.5px solid var(--border2)}
+.dr.blk{background:rgba(232,160,32,.04);border-bottom:.5px solid rgba(232,160,32,.12)}
+.dr.sub{background:rgba(255,255,255,.025);font-weight:600}
+.dr.tot{background:rgba(255,255,255,.05);font-weight:700;font-size:12px}
+.dr.sep{background:var(--bg3);height:4px;padding:0!important;border-bottom:.5px solid var(--border2)}
+.dr.i1 .dn{padding-left:14px;color:var(--text3);font-size:11px}
+.dr.i2 .dn{padding-left:26px;color:var(--text3);font-size:10px;font-family:var(--fm)}
+.dc{padding:6px 10px;display:flex;align-items:center}
+.dn{flex:1;min-width:0}
+.dv{font-family:var(--fm);text-align:right;white-space:nowrap;font-size:11px}
+.dp{font-family:var(--fm);text-align:right;font-size:10px;color:var(--text3);white-space:nowrap}
+/* grid cols: nome + N meses + total + % */
+.gc-all{grid-template-columns:200px repeat(var(--nm,6),80px) 90px 52px}
+.gc-one{grid-template-columns:200px 120px 52px}
+
+/* CHARTS */
+.cl{font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:6px;margin-top:14px}
+.cw{position:relative;margin-bottom:4px}
+canvas{width:100%!important}
+
+/* PIPELINE */
+.box{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.box-t{font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;padding:9px 14px;border-bottom:.5px solid var(--border)}
+.pr{display:flex;align-items:center;padding:7px 14px;border-bottom:.5px solid var(--border);font-size:11px}
+.pr:last-child{border-bottom:none}
+.pbadge{font-size:8px;font-family:var(--fm);padding:2px 6px;border-radius:3px;margin-right:8px;flex-shrink:0}
+.b-ok{background:rgba(61,184,122,.1);color:var(--ok)}
+.b-ng{background:rgba(232,85,85,.1);color:var(--ng)}
+.b-warn{background:rgba(232,160,32,.1);color:var(--solar)}
+.b-info{background:rgba(74,158,232,.1);color:var(--info)}
+.b-pur{background:rgba(155,111,232,.1);color:var(--purple)}
+.pl{flex:1;color:var(--text2)}
+.pv{font-family:var(--fm);min-width:95px;text-align:right}
+
+/* ERROS */
+.ec{background:var(--bg2);border:.5px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:8px}
+.ec.crit{border-left:3px solid var(--ng)}
+.ec.war{border-left:3px solid var(--solar)}
+.ec.inf{border-left:3px solid var(--info)}
+.ec-h{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;gap:8px}
+.ec-n{font-size:12px;font-weight:600}
+.ec-v{font-size:10px;font-family:var(--fm);color:var(--text3);white-space:nowrap}
+.ec-d{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:6px}
+.ec-f{font-size:10px;font-family:var(--fm);color:var(--solar);margin-bottom:8px}
+.ec-list{display:flex;flex-direction:column;gap:3px}
+.ec-item{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:8px;background:var(--bg3);border-radius:5px;padding:5px 10px;font-size:10px}
+.ec-id{font-family:var(--fm);color:var(--solar);text-decoration:none;cursor:pointer;white-space:nowrap;font-size:9px}
+.ec-id:hover{text-decoration:underline}
+.ec-desc{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ec-val{font-family:var(--fm);color:var(--text3);white-space:nowrap}
+.ec-fix{font-size:9px;font-family:var(--fm);padding:1px 5px;border-radius:3px;white-space:nowrap}
+.fx-dir{background:rgba(61,184,122,.1);color:var(--ok)}
+.fx-ind{background:rgba(74,158,232,.1);color:var(--info)}
+.fx-est{background:rgba(90,85,80,.2);color:var(--text3)}
+.fx-warn{background:rgba(232,160,32,.1);color:var(--solar)}
+
+/* ALERT */
+.alert{border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.7;margin-bottom:10px}
+.a-ng{background:rgba(232,85,85,.06);border:.5px solid rgba(232,85,85,.2);color:#E89090}
+.a-warn{background:var(--solar-bg);border:.5px solid rgba(232,160,32,.2);color:var(--solar)}
+.a-info{background:rgba(74,158,232,.06);border:.5px solid rgba(74,158,232,.2);color:var(--info)}
+
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head><body>
+
+<!-- SETUP -->
+<div id="setup">
+  <div class="setup">
+    <div class="setup-card">
+      <div style="font-size:22px;margin-bottom:12px">☀️</div>
+      <div class="setup-title">ABP Solar · Painel Financeiro Live</div>
+      <div class="setup-sub">Conecta direto ao Pipefy. Nenhum Excel, nenhuma importação — os dados vêm da API em tempo real.</div>
+      <div class="lbl">PERSONAL ACCESS TOKEN</div>
+      <input type="password" id="inp-token" class="inp" placeholder="eyJhbGci..." autocomplete="off">
+      <div class="lbl">PIPE ID</div>
+      <input type="text" id="inp-pipe" class="inp" value="1073359">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="conectar()">Conectar</button>
+        <button class="btn btn-g" onclick="usarSalvo()">Usar token salvo</button>
+      </div>
+      <div class="hint">Token em: <a href="https://app.pipefy.com/tokens" target="_blank">app.pipefy.com/tokens</a> → Personal Access Tokens</div>
+      <div class="err-setup" id="setup-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-ic">☀️</div>
+      <div>
+        <div class="logo-t">ABP SOLAR · LIVE</div>
+        <div class="logo-s" id="hdr-sub">Conectando...</div>
+      </div>
+    </div>
+    <div class="hdr-r">
+      <span class="chip" id="chip">● carregando</span>
+      <button class="btn btn-p btn-sm" id="btn-reload" onclick="carregarDados()" disabled>↻ Atualizar</button>
+      <button class="btn btn-g btn-sm" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="sbar">
+    <div class="dot dot-load" id="sdot"></div>
+    <span id="smsg">Aguardando...</span>
+    <span style="margin-left:auto" id="slast"></span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="sw('dre')">DRE</div>
+    <div class="tab" onclick="sw('visao')">VISÃO GERAL</div>
+    <div class="tab" onclick="sw('fluxo')">FLUXO</div>
+    <div class="tab" onclick="sw('pipeline')">PIPELINE</div>
+    <div class="tab" onclick="sw('erros')">ERROS <span id="err-badge" style="background:rgba(232,85,85,.18);color:var(--ng);font-size:9px;padding:1px 5px;border-radius:3px;margin-left:2px">—</span></div>
+  </div>
+
+  <!-- DRE -->
+  <div id="p-dre" class="panel active">
+    <div class="mes-bar" id="mes-bar"></div>
+    <div class="dre-scroll"><div id="dre-table" class="dre-wrap"></div></div>
+    <div id="dre-alerts"></div>
+    <div class="cl">RECEITA VS CPV DIRETO VS CPV INDIRETO VS OPEX</div>
+    <div class="cw" style="height:210px"><canvas id="ch-dre"></canvas></div>
+    <div class="cl">MARGEM BRUTA % POR MÊS</div>
+    <div class="cw" style="height:120px"><canvas id="ch-mg"></canvas></div>
+  </div>
+
+  <!-- VISÃO GERAL -->
+  <div id="p-visao" class="panel">
+    <div class="mrow" id="vm-row1"></div>
+    <div class="mrow" id="vm-row2"></div>
+    <div class="cl">COMPOSIÇÃO DO CPV POR SUBCATEGORIA</div>
+    <div class="cw" style="height:170px"><canvas id="ch-donut"></canvas></div>
+    <div class="cl">RECEITAS VS DESPESAS TOTAIS — MENSAL</div>
+    <div class="cw" style="height:190px"><canvas id="ch-mensal"></canvas></div>
+  </div>
+
+  <!-- FLUXO -->
+  <div id="p-fluxo" class="panel">
+    <div class="mrow" id="fl-meses"></div>
+    <div class="cl">ENTRADAS VS SAÍDAS</div>
+    <div class="cw" style="height:195px"><canvas id="ch-fc"></canvas></div>
+    <div class="cl">SALDO ACUMULADO</div>
+    <div class="cw" style="height:130px"><canvas id="ch-saldo"></canvas></div>
+    <div id="fl-alert" class="alert a-warn" style="margin-top:10px;display:none"></div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div id="p-pipeline" class="panel">
+    <div class="mrow" id="pipe-metrics"></div>
+    <div class="box"><div class="box-t">RECEBÍVEIS POR FASE</div><div id="pipe-rec"></div></div>
+    <div class="box"><div class="box-t">DESPESAS COMPROMETIDAS</div><div id="pipe-desp"></div></div>
+    <div class="box"><div class="box-t">INADIMPLÊNCIA</div><div id="pipe-inad"></div></div>
+    <div class="cl">COMPOSIÇÃO DO PIPELINE</div>
+    <div class="cw" style="height:160px"><canvas id="ch-pipe"></canvas></div>
+  </div>
+
+  <!-- ERROS -->
+  <div id="p-erros" class="panel">
+    <div style="font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:4px">INCONSISTÊNCIAS DETECTADAS — DADOS AO VIVO DO PIPEFY</div>
+    <div style="font-size:10px;font-family:var(--fm);color:var(--text3);margin-bottom:14px">Clique no ID para abrir o card direto no Pipefy</div>
+    <div id="erros-content"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ============================================================
+// CONFIGURAÇÃO — CAMPOS DO PIPE (mapeados da aba CONFIG)
+// ============================================================
+const FM = {
+  valor:           'valor',
+  tipo_lanc:       'tipo_de_lan_amento',
+  cat_principal:   'categoria_principal',
+  sub_implantacao: 'categoria_opera_o',
+  sub_aquisicao:   'categorias_comercial',
+  sub_engenharia:  'categorias_engenharia',
+  sub_posv:        'categorias_suporte_ao_cliente',
+  sub_pessoas:     'categoria_pessoas',
+  sub_estrutura:   'sele_o_de_nica_op_o_vertical',
+  sub_tecnologia:  'tecnologia',
+  sub_financeiro:  'financeiro_jur_dico_e_cont_bil',
+  tipo_custo:      'tipo_de_despesa',
+  centro_custo:    'centro_de_custo_1',
+  tipo_aprop:      'tipo_de_apropria_o',
+  contrato:        'contrato_destino',
+  data_comp:       'data_da_compet_ncia',
+  data_confirm:    'data_da_confirma_o_do_recebimento',
+  data_pag:        'data_do_agendamento',
+  natureza:        'natureza_do_pagamento',
+  descricao:       'descri_o',
+};
+
+// Fases do pipe
+const FASES = {
+  CONCLUIDO:      '7242993',
+  RECEBER:        '7242992',
+  SALDO_CONTR:    '338474322',
+  PROVISIONAR:    '338474307',
+  PAGAR:          '7243035',
+  AG_APROV:       '315586670',
+  CONCILIACAO:    '327224413',
+  PROTESTOS:      '339197782',
+  CALOTES:        '320052995',
+  TAXA_CARTAO:    '339631509',
+};
+
+const PIPE_URL = 'https://api.pipefy.com/graphql';
+const PIPE_ID  = '1073359';
+
+// Modelo oficial ABP
+const TIPOS_CUSTO_VALIDOS  = ['Direto','Indireto Compartilhado'];
+const CENTROS_VALIDOS      = ['Administrativo','Comercial','Engenharia','Operação','Frota'];
+const MESES_LABEL          = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const CATS_CPV             = ['Implantação / Operação','Pós-venda e Suporte','Projeto e Engenharia'];
+
+// Estado global
+let TOKEN = '', allCards = [], metrics = null, charts = {}, activeMes = 'all';
+let mesesDisponiveis = [];
+
+// ============================================================
+// AUTH
+// ============================================================
+function conectar() {
+  TOKEN = document.getElementById('inp-token').value.trim();
+  PIPE_ID_USE = document.getElementById('inp-pipe').value.trim() || PIPE_ID;
+  if (!TOKEN) { showErr('Cole o token primeiro.'); return; }
+  localStorage.setItem('abp_token', TOKEN);
+  iniciar();
+}
+function usarSalvo() {
+  TOKEN = localStorage.getItem('abp_token') || '';
+  if (!TOKEN) { showErr('Nenhum token salvo.'); return; }
+  iniciar();
+}
+function sair() {
+  TOKEN = ''; allCards = [];
+  document.getElementById('setup').style.display = '';
+  document.getElementById('app').style.display = 'none';
+}
+function showErr(m) {
+  const e = document.getElementById('setup-err');
+  e.textContent = '⚠ ' + m; e.style.display = '';
+}
+
+// ============================================================
+// PIPEFY GraphQL
+// ============================================================
+async function gql(query, variables = {}) {
+  const r = await fetch(PIPE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+    body: JSON.stringify({ query, variables })
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (d.errors) throw new Error(d.errors[0].message);
+  return d.data;
+}
+
+// Busca todos os cards paginados
+async function fetchCards() {
+  let cards = [], cursor = null, page = 0;
+  const fieldQ = `fields { field { id label } value array_value date_value datetime_value }`;
+  while (true) {
+    page++;
+    setStatus('load', `Buscando cards... página ${page} (${cards.length} cards)`);
+    const q = `query($pid: ID!, $after: String) {
+      cards(pipe_id: $pid, first: 50, after: $after) {
+        pageInfo { hasNextPage endCursor }
+        edges { node { id title current_phase { id name } ${fieldQ} } }
+      }
+    }`;
+    const d = await gql(q, { pid: PIPE_ID, after: cursor });
+    const conn = d.cards;
+    cards.push(...conn.edges.map(e => e.node));
+    if (!conn.pageInfo.hasNextPage) break;
+    cursor = conn.pageInfo.endCursor;
+  }
+  return cards;
+}
+
+// ============================================================
+// EXTRAÇÃO DE VALORES
+// ============================================================
+function fv(card, fieldId) {
+  const f = (card.fields || []).find(f => f.field.id === fieldId);
+  if (!f) return null;
+  return f.value || (f.array_value && f.array_value[0]) || f.date_value || f.datetime_value || null;
+}
+function fvAll(card, fieldId) {
+  const f = (card.fields || []).find(f => f.field.id === fieldId);
+  if (!f) return [];
+  return f.array_value || (f.value ? [f.value] : []);
+}
+function parseVal(v) {
+  if (!v) return 0;
+  return parseFloat(String(v).replace(/[R$\s.]/g,'').replace(',','.')) || 0;
+}
+function parseMonth(card) {
+  const dc = fv(card, FM.data_confirm);
+  const dp = fv(card, FM.data_pag);
+  const d = new Date(dc || dp || '');
+  return isNaN(d) ? null : d.getMonth(); // 0-indexed
+}
+
+// ============================================================
+// PROCESSAMENTO
+// ============================================================
+function processCards(cards) {
+  const byPhase = {};
+  Object.values(FASES).forEach(id => byPhase[id] = { cards: [], total: 0 });
+
+  const rec_conc = [], desp_conc = [], taxas = [], calotes_rec = [], protestos = [], cancelados_desp = [], pipeline_rec = [], pipeline_desp = [];
+
+  for (const card of cards) {
+    const phId = card.current_phase?.id;
+    const valor = parseVal(fv(card, FM.valor));
+    const tipo = fv(card, FM.tipo_lanc) || '';
+    const cat = fv(card, FM.cat_principal) || '';
+    const mes = parseMonth(card);
+
+    if (!byPhase[phId]) byPhase[phId] = { cards: [], total: 0 };
+    byPhase[phId].cards.push(card);
+    byPhase[phId].total += valor;
+
+    const isRec = tipo.toLowerCase().includes('receber');
+    const isPag = tipo.toLowerCase().includes('pagar') || tipo.toLowerCase().includes('caju');
+    const isTaxa = phId === FASES.TAXA_CARTAO;
+
+    const _c = { ...card, _valor: valor, _mes: mes, _cat: cat };
+
+    if (isTaxa) { taxas.push(_c); }
+    else if (phId === FASES.CALOTES || phId === FASES.CONCLUIDO && valor === 0) {
+      if (isRec) calotes_rec.push(_c); else cancelados_desp.push(_c);
+    }
+    else if (phId === FASES.PROTESTOS) { protestos.push(_c); }
+    else if (phId === FASES.CONCLUIDO) {
+      if (isRec) rec_conc.push(_c); else if (isPag) desp_conc.push(_c);
+    }
+    else if (isRec) { pipeline_rec.push({ ..._c, _fase: card.current_phase?.name }); }
+    else if (isPag) { pipeline_desp.push({ ..._c, _fase: card.current_phase?.name }); }
+  }
+
+  return { rec_conc, desp_conc, taxas, calotes_rec, protestos, cancelados_desp, pipeline_rec, pipeline_desp, byPhase };
+}
+
+function calcMetrics(proc) {
+  const sum = arr => arr.reduce((a, c) => a + c._valor, 0);
+  const sumMes = (arr, m) => arr.filter(c => c._mes === m).reduce((a, c) => a + c._valor, 0);
+  const sumCat = (arr, cat) => arr.filter(c => c._cat === cat).reduce((a, c) => a + c._valor, 0);
+  const sumFase = (arr, fase) => arr.filter(c => c._fase === fase).reduce((a, c) => a + c._valor, 0);
+  const sumTipo = (arr, tipo) => arr.filter(c => {
+    const tc = fv(c, FM.tipo_custo) || '';
+    return tc.toLowerCase().includes(tipo.toLowerCase());
+  }).reduce((a, c) => a + c._valor, 0);
+
+  // Descobre meses com dados
+  const mesesSet = new Set();
+  [...proc.rec_conc, ...proc.desp_conc].forEach(c => { if (c._mes !== null) mesesSet.add(c._mes); });
+  const meses = Array.from(mesesSet).sort((a, b) => a - b);
+  mesesDisponiveis = meses;
+
+  const rec = sum(proc.rec_conc);
+  const desp_total = sum(proc.desp_conc);
+  const taxas = sum(proc.taxas);
+
+  // CPV = Implantação(Direto+Indireto) + Pós-venda + Projeto
+  const impl = proc.desp_conc.filter(c => c._cat === 'Implantação / Operação');
+  const impl_dir = impl.filter(c => (fv(c, FM.tipo_custo) || '') === 'Direto');
+  const impl_ind = impl.filter(c => (fv(c, FM.tipo_custo) || '').trim() === 'Indireto Compartilhado');
+  const impl_est = impl.filter(c => (fv(c, FM.tipo_custo) || '') === 'Estrutural');
+
+  const cpv_dir_total = sum(impl_dir) + sumCat(proc.desp_conc, 'Pós-venda e Suporte') + sumCat(proc.desp_conc, 'Projeto e Engenharia');
+  const cpv_ind_total = sum(impl_ind);
+  const cpv_total = cpv_dir_total + cpv_ind_total;
+  const mg_bruta = rec - cpv_total;
+
+  const pessoas = sumCat(proc.desp_conc, 'Pessoas');
+  const estrutura = sumCat(proc.desp_conc, 'Estrutura e Administração');
+  const aquisicao = sumCat(proc.desp_conc, 'Aquisição de Clientes');
+  const tecnologia = sumCat(proc.desp_conc, 'Tecnologia');
+  const financeiro = sumCat(proc.desp_conc, 'Financeiro, Jurídico e Contábil');
+  const ebitda = mg_bruta - pessoas - estrutura - aquisicao - tecnologia;
+  const resultado = ebitda - financeiro - taxas;
+
+  // Por mês
+  const recM = m => sumMes(proc.rec_conc, m);
+  const despM = m => sumMes(proc.desp_conc, m);
+  const cpvDirM = m => impl_dir.filter(c => c._mes === m).reduce((a, c) => a + c._valor, 0)
+    + proc.desp_conc.filter(c => c._mes === m && ['Pós-venda e Suporte','Projeto e Engenharia'].includes(c._cat)).reduce((a, c) => a + c._valor, 0);
+  const cpvIndM = m => impl_ind.filter(c => c._mes === m).reduce((a, c) => a + c._valor, 0);
+  const mgM = m => recM(m) - cpvDirM(m) - cpvIndM(m);
+  const pessM = m => proc.desp_conc.filter(c => c._mes === m && c._cat === 'Pessoas').reduce((a, c) => a + c._valor, 0);
+  const estrM = m => proc.desp_conc.filter(c => c._mes === m && c._cat === 'Estrutura e Administração').reduce((a, c) => a + c._valor, 0);
+  const aquiM = m => proc.desp_conc.filter(c => c._mes === m && c._cat === 'Aquisição de Clientes').reduce((a, c) => a + c._valor, 0);
+  const techM = m => proc.desp_conc.filter(c => c._mes === m && c._cat === 'Tecnologia').reduce((a, c) => a + c._valor, 0);
+  const finM  = m => proc.desp_conc.filter(c => c._mes === m && c._cat === 'Financeiro, Jurídico e Contábil').reduce((a, c) => a + c._valor, 0);
+  const ebitdaM = m => mgM(m) - pessM(m) - estrM(m) - aquiM(m) - techM(m);
+  const resM = m => ebitdaM(m) - finM(m);
+
+  // Subcategorias CPV para donut
+  const subcats = {};
+  impl.forEach(c => {
+    const sc = fv(c, FM.sub_implantacao) || 'Outros';
+    subcats[sc] = (subcats[sc] || 0) + c._valor;
+  });
+
+  // Pipeline
+  const ph_name = name => proc.pipeline_rec.filter(c => c._fase === name).reduce((a, c) => a + c._valor, 0);
+  const ph_desp = name => proc.pipeline_desp.filter(c => c._fase === name).reduce((a, c) => a + c._valor, 0);
+
+  return {
+    rec, desp_total, taxas, cpv_dir_total, cpv_ind_total, cpv_total,
+    mg_bruta, pessoas, estrutura, aquisicao, tecnologia, financeiro, ebitda, resultado,
+    meses,
+    recM, despM, cpvDirM, cpvIndM, mgM, pessM, estrM, aquiM, techM, finM, ebitdaM, resM,
+    subcats, impl_dir, impl_ind, impl_est,
+    // Pipeline
+    pip_receber:    ph_name('Receber'),
+    pip_saldo:      ph_name('Saldo de contratos / Permutas'),
+    pip_concil:     ph_name('Conciliação Financeira'),
+    pip_prov_rec:   ph_name('Provisionar'),
+    pip_pagar:      ph_desp('Pagar'),
+    pip_ag_aprov:   ph_desp('Aguardando aprovação'),
+    pip_prov_desp:  ph_desp('Provisionar'),
+    pip_total_rec:  sum(proc.pipeline_rec),
+    pip_total_desp: sum(proc.pipeline_desp),
+    inad_calotes:   sum(proc.calotes_rec),
+    inad_protestos: sum(proc.protestos),
+    cancelados:     sum(proc.cancelados_desp),
+    // Referências para erros
+    _desp_conc: proc.desp_conc,
+    _all_cards: allCards,
+  };
+}
+
+// ============================================================
+// DETECÇÃO DE ERROS (ao vivo dos cards do Pipefy)
+// ============================================================
+function detectErrors(cards) {
+  const erros = [];
+
+  // E1 - Tipo custo inválido
+  const e1 = cards.filter(c => {
+    const v = fv(c, FM.tipo_custo);
+    return v && ['Variável','Fixa'].some(x => v.includes(x));
+  });
+  if (e1.length) erros.push({
+    sev:'crit', title:'Tipo de Custo inválido: "Variável" ou "Fixa"',
+    count: e1.length, valor: e1.reduce((a, c) => a + parseVal(fv(c, FM.valor)), 0),
+    desc: 'Não existem no modelo ABP. Quebram análise de margem. Tipos válidos: Direto · Indireto Compartilhado · Estrutural.',
+    fix: '→ Reclassificar: rastreável a contrato = Direto · compartilhado = Indireto · existe sem obra = Estrutural',
+    cards: e1,
+  });
+
+  // E2 - Centro inválido
+  const e2 = cards.filter(c => {
+    const v = fv(c, FM.centro_custo);
+    return v && !CENTROS_VALIDOS.includes(v);
+  });
+  if (e2.length) erros.push({
+    sev:'crit', title:'Centro de Custo fora do modelo',
+    count: e2.length, valor: e2.reduce((a, c) => a + parseVal(fv(c, FM.valor)), 0),
+    desc: 'Centros válidos: Administrativo · Comercial · Engenharia · Operação · Frota.',
+    fix: '→ Materiais → Operação · Contratos → Operação · Pessoas → Administrativo',
+    cards: e2,
+  });
+
+  // E3 - Impl + Estrutural
+  const e3 = cards.filter(c =>
+    fv(c, FM.cat_principal) === 'Implantação / Operação' &&
+    fv(c, FM.tipo_custo) === 'Estrutural'
+  );
+  if (e3.length) erros.push({
+    sev:'war', title:'Implantação/Operação com Tipo Estrutural',
+    count: e3.length, valor: e3.reduce((a, c) => a + parseVal(fv(c, FM.valor)), 0),
+    desc: 'Custo operacional classificado como Estrutural fica fora do CPV — invisível na margem do contrato.',
+    fix: '→ Revisar: serve uma obra? = Direto · serve várias? = Indireto Compartilhado',
+    cards: e3,
+  });
+
+  // E4 - EPI Estrutural
+  const e4 = cards.filter(c =>
+    (fv(c, FM.sub_implantacao) || '').includes('EPI') &&
+    fv(c, FM.tipo_custo) === 'Estrutural'
+  );
+  if (e4.length) erros.push({
+    sev:'war', title:'EPIs classificados como Estrutural',
+    count: e4.length, valor: e4.reduce((a, c) => a + parseVal(fv(c, FM.valor)), 0),
+    desc: 'EPI é custo operacional. Como Estrutural, sai da margem bruta — inflando artificialmente o resultado dos contratos.',
+    fix: '→ EPI por obra específica = Direto · EPI compartilhado = Indireto Compartilhado',
+    cards: e4,
+  });
+
+  // E5 - Direto sem contrato
+  const e5 = cards.filter(c => {
+    const tc = fv(c, FM.tipo_custo);
+    const dest = fv(c, FM.contrato);
+    return tc === 'Direto' && (!dest || ['Contrato','Materiais','Estoque',''].includes((dest||'').trim()));
+  });
+  if (e5.length) erros.push({
+    sev:'inf', title:`${e5.length} lançamentos Diretos sem código de contrato`,
+    count: e5.length, valor: e5.reduce((a, c) => a + parseVal(fv(c, FM.valor)), 0),
+    desc: 'Tipo = Direto mas campo Contrato/Destino vazio ou genérico. Impossível calcular margem por obra.',
+    fix: '→ Vincular ao código do projeto (P1425, P1472...) no campo Contrato/Destino',
+    cards: e5.sort((a, b) => parseVal(fv(b, FM.valor)) - parseVal(fv(a, FM.valor))).slice(0, 25),
+  });
+
+  return erros;
+}
+
+// ============================================================
+// FORMATAÇÃO
+// ============================================================
+const fmtK = v => {
+  const a = Math.abs(v);
+  const s = v < 0 ? '−' : '';
+  if (a >= 1e6) return s + 'R$ ' + (a/1e6).toFixed(2).replace('.',',') + 'M';
+  if (a >= 1e3) return s + 'R$ ' + Math.round(a/1000) + 'K';
+  return s + 'R$ ' + Math.round(a).toLocaleString('pt-BR');
+};
+const fmtFull = v => {
+  if (!v) return '—';
+  const a = Math.abs(v);
+  return (v < 0 ? '−' : '') + 'R$ ' + Math.round(a).toLocaleString('pt-BR');
+};
+const pct = (v, b) => b ? (100*v/b).toFixed(1)+'%' : '—';
+const cls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : 'warn';
+
+// ============================================================
+// RENDER DRE
+// ============================================================
+function buildMesBar() {
+  const m = metrics;
+  const bar = document.getElementById('mes-bar');
+  bar.innerHTML = `<span style="font-size:9px;font-family:var(--fm);color:var(--text3)">PERÍODO:</span>
+    <div class="mb all active" onclick="setMes('all')">ACUMULADO</div>` +
+    m.meses.map(i => `<div class="mb" onclick="setMes(${i})">${MESES_LABEL[i]}</div>`).join('');
+  activeMes = 'all';
+}
+
+function setMes(m) {
+  activeMes = m;
+  document.querySelectorAll('.mb').forEach((b, i) => {
+    if (i === 0) b.classList.toggle('active', m === 'all');
+    else b.classList.toggle('active', m === metrics.meses[i-1]);
+  });
+  renderDRE();
+}
+
+function dreRow(cls2, cols, gridClass) {
+  return `<div class="dr ${cls2} ${gridClass}">${cols}</div>`;
+}
+function cell(val, cls2='', align='left') {
+  return `<div class="dc ${align==='right'?'dv':'dn'} ${cls2}">${val}</div>`;
+}
+function valCell(v, base, showPct=false) {
+  const vc = `<span class="${cls(v)}">${fmtFull(v)}</span>`;
+  const pc = `<div class="dc dp" style="justify-content:flex-end">${pct(v, base)}</div>`;
+  return `<div class="dc dv" style="justify-content:flex-end">${vc}</div>${showPct ? pc : ''}`;
+}
+
+function renderDRE() {
+  const m = metrics;
+  const isSingle = activeMes !== 'all';
+  const meses = isSingle ? [activeMes] : m.meses;
+  const NM = meses.length;
+  const gc = isSingle ? 'gc-one' : 'gc-all';
+  document.querySelector('.dre-wrap').style.setProperty('--nm', NM);
+
+  const recBase = isSingle ? m.recM(activeMes) : m.rec;
+  const get = (fn, mes) => isSingle ? fn(mes) : meses.reduce((a, i) => a + fn(i), 0);
+
+  const recT = get(m.recM, activeMes);
+  const cpvDT = get(m.cpvDirM, activeMes);
+  const cpvIT = get(m.cpvIndM, activeMes);
+  const mgT = recT - cpvDT - cpvIT;
+  const pessT = get(m.pessM, activeMes);
+  const estrT = get(m.estrM, activeMes);
+  const aquiT = get(m.aquiM, activeMes);
+  const techT = get(m.techM, activeMes);
+  const finT = get(m.finM, activeMes);
+  const ebitdaT = mgT - pessT - estrT - aquiT - techT;
+  const resT = ebitdaT - finT;
+  const base = recT;
+
+  const hdrCols = isSingle
+    ? `<div class="dc dn">DESCRIÇÃO</div><div class="dc dv" style="justify-content:flex-end">${MESES_LABEL[activeMes]}</div><div class="dc dp" style="justify-content:flex-end">% REC</div>`
+    : `<div class="dc dn">DESCRIÇÃO</div>${meses.map(i=>`<div class="dc dv" style="justify-content:flex-end">${MESES_LABEL[i]}</div>`).join('')}<div class="dc dv" style="justify-content:flex-end">TOTAL</div><div class="dc dp" style="justify-content:flex-end">%REC</div>`;
+
+  const rowCols = (label, fn, valOverride=null, nameClass='') => {
+    const total = valOverride !== null ? valOverride : get(fn, activeMes);
+    const vals = isSingle
+      ? valCell(total, base, true)
+      : meses.map(i => `<div class="dc dv" style="justify-content:flex-end"><span class="${cls(fn(i))}">${fn(i) ? fmtFull(fn(i)) : '<span style="color:var(--text3)">—</span>'}</span></div>`).join('') +
+        `<div class="dc dv" style="justify-content:flex-end"><span class="${cls(total)}">${fmtFull(total)}</span></div>` +
+        `<div class="dc dp" style="justify-content:flex-end">${pct(total, base)}</div>`;
+    return `<div class="dc dn ${nameClass}">${label}</div>${vals}`;
+  };
+
+  // Subcategorias implantação
+  const subcatRows = (tipo) => {
+    const arr = tipo === 'dir' ? m.impl_dir : m.impl_ind;
+    const subcatSet = {};
+    arr.forEach(c => {
+      const sc = fv(c, FM.sub_implantacao) || 'Outros';
+      if (!subcatSet[sc]) subcatSet[sc] = {};
+      meses.forEach(i => {
+        subcatSet[sc][i] = (subcatSet[sc][i] || 0) + (c._mes === i ? c._valor : 0);
+      });
+    });
+    return Object.entries(subcatSet).map(([sc, byMes]) => {
+      const total = Object.values(byMes).reduce((a, b) => a + b, 0);
+      if (!total) return '';
+      const fn = i => byMes[i] || 0;
+      return `<div class="dr i2 ${gc}">${rowCols(sc, fn, null, '')}</div>`;
+    }).join('');
+  };
+
+  const html = `
+    <div class="dr hdr-row ${gc}">${hdrCols}</div>
+    <div class="dr sub ${gc}">${rowCols('RECEITA BRUTA', m.recM, recT)}</div>
+    <div class="dr sep"></div>
+    <div class="dr blk ${gc}"><div class="dc dn" style="color:var(--ok);font-size:10px;font-family:var(--fm)">▶ CUSTOS DIRETOS</div>${isSingle?`<div class="dc dv neg" style="justify-content:flex-end">${fmtFull(cpvDT)}</div><div class="dc dp" style="justify-content:flex-end">${pct(cpvDT,base)}</div>`:meses.map(i=>`<div class="dc dv neg" style="justify-content:flex-end">${fmtFull(m.cpvDirM(i))}</div>`).join('')+`<div class="dc dv neg" style="justify-content:flex-end">${fmtFull(cpvDT)}</div><div class="dc dp" style="justify-content:flex-end">${pct(cpvDT,base)}</div>`}</div>
+    ${subcatRows('dir')}
+    <div class="dr sub ${gc}">${rowCols('= Total Direto', m.cpvDirM, cpvDT, 'i1')}</div>
+    <div class="dr sep"></div>
+    <div class="dr blk ${gc}"><div class="dc dn" style="color:var(--info);font-size:10px;font-family:var(--fm)">▶ CUSTOS INDIRETOS COMPARTILHADOS</div>${isSingle?`<div class="dc dv neg" style="justify-content:flex-end">${fmtFull(cpvIT)}</div><div class="dc dp" style="justify-content:flex-end">${pct(cpvIT,base)}</div>`:meses.map(i=>`<div class="dc dv neg" style="justify-content:flex-end">${fmtFull(m.cpvIndM(i))}</div>`).join('')+`<div class="dc dv neg" style="justify-content:flex-end">${fmtFull(cpvIT)}</div><div class="dc dp" style="justify-content:flex-end">${pct(cpvIT,base)}</div>`}</div>
+    ${subcatRows('ind')}
+    <div class="dr sub ${gc}">${rowCols('= Total Indireto', m.cpvIndM, cpvIT, 'i1')}</div>
+    <div class="dr sep"></div>
+    <div class="dr tot ${gc}"><div class="dc dn" style="color:var(--text)">= MARGEM BRUTA</div>${isSingle?`<div class="dc dv" style="justify-content:flex-end"><span class="${cls(mgT)}">${fmtFull(mgT)}</span></div><div class="dc dp ${cls(mgT)}" style="justify-content:flex-end;font-weight:700">${pct(mgT,base)}</div>`:meses.map(i=>`<div class="dc dv" style="justify-content:flex-end"><span class="${cls(m.mgM(i))}">${fmtFull(m.mgM(i))}</span></div>`).join('')+`<div class="dc dv" style="justify-content:flex-end"><span class="${cls(mgT)}">${fmtFull(mgT)}</span></div><div class="dc dp ${cls(mgT)}" style="justify-content:flex-end;font-weight:700">${pct(mgT,base)}</div>`}</div>
+    <div class="dr sep"></div>
+    <div class="dr i1 ${gc}">${rowCols('(−) Pessoas', m.pessM, pessT)}</div>
+    <div class="dr i1 ${gc}">${rowCols('(−) Estrutura e Administração', m.estrM, estrT)}</div>
+    <div class="dr i1 ${gc}">${rowCols('(−) Aquisição de Clientes', m.aquiM, aquiT)}</div>
+    <div class="dr i1 ${gc}">${rowCols('(−) Tecnologia', m.techM, techT)}</div>
+    <div class="dr sep"></div>
+    <div class="dr tot ${gc}"><div class="dc dn" style="color:var(--text)">= EBITDA</div>${isSingle?`<div class="dc dv" style="justify-content:flex-end"><span class="${cls(ebitdaT)}">${fmtFull(ebitdaT)}</span></div><div class="dc dp ${cls(ebitdaT)}" style="justify-content:flex-end;font-weight:700">${pct(ebitdaT,base)}</div>`:meses.map(i=>`<div class="dc dv" style="justify-content:flex-end"><span class="${cls(m.ebitdaM(i))}">${fmtFull(m.ebitdaM(i))}</span></div>`).join('')+`<div class="dc dv" style="justify-content:flex-end"><span class="${cls(ebitdaT)}">${fmtFull(ebitdaT)}</span></div><div class="dc dp ${cls(ebitdaT)}" style="justify-content:flex-end;font-weight:700">${pct(ebitdaT,base)}</div>`}</div>
+    <div class="dr sep"></div>
+    <div class="dr i1 ${gc}">${rowCols('(−) Financeiro, Jurídico e Contábil', m.finM, finT)}</div>
+    <div class="dr sep"></div>
+    <div class="dr tot ${gc}"><div class="dc dn" style="color:var(--ng)">= RESULTADO OPERACIONAL</div>${isSingle?`<div class="dc dv" style="justify-content:flex-end"><span class="${cls(resT)}">${fmtFull(resT)}</span></div><div class="dc dp ${cls(resT)}" style="justify-content:flex-end;font-weight:700">${pct(resT,base)}</div>`:meses.map(i=>`<div class="dc dv" style="justify-content:flex-end"><span class="${cls(m.resM(i))}">${fmtFull(m.resM(i))}</span></div>`).join('')+`<div class="dc dv" style="justify-content:flex-end"><span class="${cls(resT)}">${fmtFull(resT)}</span></div><div class="dc dp ${cls(resT)}" style="justify-content:flex-end;font-weight:700">${pct(resT,base)}</div>`}</div>
+  `;
+  document.getElementById('dre-table').innerHTML = html;
+
+  // Alertas dinâmicos
+  const alerts = [];
+  const worstMes = m.meses.reduce((a, i) => m.mgM(i) < m.mgM(a) ? i : a, m.meses[0]);
+  if (m.mgM(worstMes) < 0)
+    alerts.push(`<div class="alert a-ng">⚠️ <strong>${MESES_LABEL[worstMes]}: Margem Bruta = ${fmtK(m.mgM(worstMes))} (${pct(m.mgM(worstMes), m.recM(worstMes))})</strong> — CPV indireto de ${fmtK(m.cpvIndM(worstMes))} neste mês. Verificar concentração de compras de estoque.</div>`);
+  if (m.resultado < 0)
+    alerts.push(`<div class="alert a-warn">📌 EBITDA de ${fmtK(m.ebitda)} (${pct(m.ebitda, m.rec)}) destruído por Financeiro+Cartão = ${fmtK(m.financeiro + m.taxas)}. Resultado final: ${fmtK(m.resultado)}.</div>`);
+  document.getElementById('dre-alerts').innerHTML = alerts.join('');
+}
+
+// ============================================================
+// RENDER VISÃO GERAL
+// ============================================================
+function renderVisao() {
+  const m = metrics;
+  const mc = (l, v, s, c, hl=false) =>
+    `<div class="mc${hl?' hl':''}"><div class="mc-l">${l}</div><div class="mc-v ${c}">${v}</div><div class="mc-s">${s}</div></div>`;
+
+  document.getElementById('vm-row1').innerHTML =
+    mc('RECEITA REALIZADA', fmtK(m.rec), `${metrics._all_cards.filter(c=>c.current_phase?.id===FASES.CONCLUIDO).length} cards`, 'pos') +
+    mc('CPV DIRETO', fmtK(m.cpv_dir_total), 'custo rastreável', 'neg') +
+    mc('CPV INDIRETO', fmtK(m.cpv_ind_total), 'custo compartilhado', 'neg') +
+    mc('MARGEM BRUTA', pct(m.mg_bruta, m.rec), fmtK(m.mg_bruta), m.mg_bruta > 0 ? 'warn' : 'neg', true) +
+    mc('EBITDA', pct(m.ebitda, m.rec), fmtK(m.ebitda), m.ebitda > 0 ? 'warn' : 'neg', true) +
+    mc('RESULTADO', fmtK(m.resultado), 'após fin + cartão', m.resultado >= 0 ? 'pos' : 'neg', true);
+
+  document.getElementById('vm-row2').innerHTML =
+    mc('PIPELINE REC.', fmtK(m.pip_total_rec), 'a confirmar', 'info') +
+    mc('A PAGAR', fmtK(m.pip_total_desp), 'comprometido', 'warn') +
+    mc('SALDO PROJ.', fmtK(m.pip_total_rec - m.pip_total_desp), 'pipeline − a pagar', 'pos') +
+    mc('INADIMPLÊNCIA', fmtK(m.inad_calotes + m.inad_protestos), 'calotes + protestos', 'neg') +
+    mc('IMPL. ESTRUTURAL', fmtK(metrics._all_cards.filter(c => fv(c,FM.cat_principal)==='Implantação / Operação' && fv(c,FM.tipo_custo)==='Estrutural').reduce((a,c)=>a+parseVal(fv(c,FM.valor)),0)), '⚠ fora do CPV', 'warn') +
+    mc('TOTAL CARDS', allCards.length.toLocaleString('pt-BR'), 'no pipe', 'info');
+}
+
+// ============================================================
+// RENDER FLUXO
+// ============================================================
+function renderFluxo() {
+  const m = metrics;
+  const despM = i => m.despM(i) + (i === m.meses[m.meses.length-1] ? m.taxas : 0); // simplificado
+  const diffs = m.meses.map(i => m.recM(i) - m.despM(i));
+  const worst = m.meses[diffs.indexOf(Math.min(...diffs))];
+  const best  = m.meses[diffs.indexOf(Math.max(...diffs))];
+
+  document.getElementById('fl-meses').innerHTML = m.meses.map((i, idx) => {
+    const d = diffs[idx];
+    return `<div class="mc"><div class="mc-l">${MESES_LABEL[i]}</div><div class="mc-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${fmtK(d)}</div><div class="mc-s">${d>=0?'positivo':'negativo'}</div></div>`;
+  }).join('');
+
+  const al = document.getElementById('fl-alert');
+  al.innerHTML = `⚠️ <strong>${MESES_LABEL[worst]}</strong> pior mês (${fmtK(diffs[m.meses.indexOf(worst)])}), <strong>${MESES_LABEL[best]}</strong> melhor (${fmtK(diffs[m.meses.indexOf(best)])}).`;
+  al.style.display = '';
+}
+
+// ============================================================
+// RENDER PIPELINE
+// ============================================================
+function renderPipeline() {
+  const m = metrics;
+  const mc = (l, v, s, c, hl=false) =>
+    `<div class="mc${hl?' hl':''}"><div class="mc-l">${l}</div><div class="mc-v ${c}">${v}</div><div class="mc-s">${s}</div></div>`;
+  document.getElementById('pipe-metrics').innerHTML =
+    mc('RESULTADO ATUAL', fmtK(m.resultado), 'realizado', m.resultado>=0?'pos':'neg') +
+    mc('+ PIPELINE REC.', '+'+fmtK(m.pip_total_rec), 'a confirmar', 'info') +
+    mc('− A PAGAR', '−'+fmtK(m.pip_total_desp), 'comprometido', 'warn') +
+    mc('POSIÇÃO PROJ.', fmtK(m.resultado+m.pip_total_rec-m.pip_total_desp), 'se 100% converter', 'pos', true);
+
+  const pr = (badge, bcls, label, val, vcls) =>
+    `<div class="pr"><span class="pbadge ${bcls}">${badge}</span><span class="pl">${label}</span><span class="pv ${vcls}">${fmtFull(val)}</span></div>`;
+
+  document.getElementById('pipe-rec').innerHTML =
+    pr('SEGURO','b-ok','A receber — contratos', m.pip_receber, 'pos') +
+    pr('VERIFICAR','b-info','Saldo contratos / Permutas', m.pip_saldo, 'info') +
+    pr('CONCILIAR','b-warn','Conciliação Financeira', m.pip_concil, 'warn') +
+    pr('PROVISÓRIO','b-warn','Provisionar', m.pip_prov_rec, 'warn') +
+    `<div class="pr" style="background:rgba(255,255,255,.02)"><span class="pbadge b-pur">TOTAL</span><span class="pl" style="font-weight:600">Pipeline total</span><span class="pv purple" style="font-weight:700">${fmtFull(m.pip_total_rec)}</span></div>`;
+
+  document.getElementById('pipe-desp').innerHTML =
+    pr('URGENTE','b-ng','A pagar — aprovados', m.pip_pagar, 'neg') +
+    pr('APROVAÇÃO','b-warn','Aguardando aprovação', m.pip_ag_aprov, 'warn') +
+    pr('PROVISÓRIO','b-warn','Provisionar', m.pip_prov_desp, 'warn') +
+    `<div class="pr" style="background:rgba(255,255,255,.02)"><span class="pbadge b-ng">TOTAL</span><span class="pl" style="font-weight:600">Comprometido</span><span class="pv neg" style="font-weight:700">${fmtFull(m.pip_total_desp)}</span></div>`;
+
+  document.getElementById('pipe-inad').innerHTML =
+    pr('CALOTES','b-ng','Cancelados / não recebidos', m.inad_calotes, 'neg') +
+    pr('JUDICIAL','b-ng','Protestos / Negociação', m.inad_protestos, 'neg') +
+    pr('ECONOMIA','b-ok','Despesas canceladas', m.cancelados, 'pos') +
+    `<div class="pr" style="background:rgba(255,255,255,.02)"><span class="pbadge b-ng">PERDA</span><span class="pl" style="font-weight:600">Perda líquida</span><span class="pv neg" style="font-weight:700">${fmtFull(m.inad_calotes+m.inad_protestos-m.cancelados)}</span></div>`;
+}
+
+// ============================================================
+// RENDER ERROS
+// ============================================================
+function renderErros() {
+  const erros = detectErrors(allCards);
+  document.getElementById('err-badge').textContent = erros.length;
+  const sevClass = {crit:'crit', war:'war', inf:'inf'};
+
+  document.getElementById('erros-content').innerHTML = erros.map(e => `
+    <div class="ec ${sevClass[e.sev]}">
+      <div class="ec-h">
+        <div class="ec-n">${e.sev==='crit'?'⛔':e.sev==='war'?'⚠':'ℹ'} ${e.title}</div>
+        <span class="ec-v">${e.count} cards${e.valor?' · '+fmtK(e.valor):''}</span>
+      </div>
+      <div class="ec-d">${e.desc}</div>
+      <div class="ec-f">${e.fix}</div>
+      <div class="ec-list">
+        ${e.cards.slice(0, 20).map(c => {
+          const pipeId = c.id; // ID real do Pipefy (não o campo Código)
+          const url = `https://app.pipefy.com/open-cards/${pipeId}`;
+          const val = parseVal(fv(c, FM.valor));
+          const tc = fv(c, FM.tipo_custo) || '—';
+          const fixCls = tc==='Direto'?'fx-dir':tc.includes('Indireto')?'fx-ind':tc==='Estrutural'?'fx-est':'fx-warn';
+          return `<div class="ec-item">
+            <a class="ec-id" href="${url}" target="_blank" title="Abrir card no Pipefy">↗ ${pipeId}</a>
+            <span class="ec-desc" title="${c.title}">${c.title}</span>
+            <span class="ec-val">${val?fmtFull(val):''}</span>
+            <span class="ec-fix ${fixCls}">${tc}</span>
+          </div>`;
+        }).join('')}
+        ${e.cards.length > 20 ? `<div style="font-size:10px;font-family:var(--fm);color:var(--text3);padding:4px 0">+${e.cards.length-20} cards adicionais</div>` : ''}
+      </div>
+    </div>
+  `).join('') || '<div class="alert a-info">✓ Nenhuma inconsistência detectada.</div>';
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+const SOLAR='#E8A020',OK='#3DB87A',NG='#E85555',INFO='#4A9EE8',PUR='#9B6FE8';
+const gc2='rgba(255,255,255,0.05)',tc2='#5A5550',fm2='DM Mono';
+const bTip={backgroundColor:'#222',titleColor:'#F0EDE8',bodyColor:'#A09A90',borderColor:'rgba(255,255,255,.1)',borderWidth:.5,
+  callbacks:{label:ctx=>' R$ '+Math.round(ctx.raw).toLocaleString('pt-BR')}};
+const bSc={ticks:{color:tc2,font:{size:10,family:fm2}},grid:{color:gc2},border:{display:false}};
+const yK={...bSc,ticks:{...bSc.ticks,callback:v=>'R$ '+Math.round(v/1000)+'K'}};
+function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function buildCharts(tab) {
+  const m = metrics;
+  const labels = m.meses.map(i => MESES_LABEL[i]);
+
+  if (tab === 'dre') {
+    dc('dre');
+    charts['dre'] = new Chart(document.getElementById('ch-dre'),{
+      type:'bar', data:{labels, datasets:[
+        {label:'Receita',data:m.meses.map(m.recM),backgroundColor:'rgba(61,184,122,.8)',borderWidth:0,borderRadius:3},
+        {label:'CPV Direto',data:m.meses.map(m.cpvDirM),backgroundColor:'rgba(232,160,32,.8)',borderWidth:0,borderRadius:3},
+        {label:'CPV Indireto',data:m.meses.map(m.cpvIndM),backgroundColor:'rgba(74,158,232,.7)',borderWidth:0,borderRadius:3},
+        {label:'OPEX',data:m.meses.map(i=>m.pessM(i)+m.estrM(i)+m.aquiM(i)+m.techM(i)),backgroundColor:'rgba(155,111,232,.6)',borderWidth:0,borderRadius:3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
+        plugins:{legend:{labels:{color:tc2,font:{size:10,family:fm2},boxWidth:9,padding:8}},tooltip:bTip},
+        scales:{x:bSc,y:yK}}
+    });
+    dc('mg');
+    const mgPct = m.meses.map(i => m.recM(i) ? +(100*m.mgM(i)/m.recM(i)).toFixed(1) : 0);
+    charts['mg'] = new Chart(document.getElementById('ch-mg'),{
+      type:'bar', data:{labels, datasets:[{
+        label:'Margem Bruta %', data:mgPct,
+        backgroundColor:mgPct.map(v=>v>=0?'rgba(61,184,122,.75)':'rgba(232,85,85,.75)'),
+        borderWidth:0,borderRadius:3
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
+        plugins:{legend:{display:false},tooltip:{...bTip,callbacks:{label:ctx=>` ${ctx.raw}%`}}},
+        scales:{x:bSc,y:{...bSc,ticks:{...bSc.ticks,callback:v=>v+'%'}}}}
+    });
+  }
+
+  if (tab === 'visao') {
+    dc('donut');
+    const subs = Object.entries(m.subcats).sort((a,b)=>b[1]-a[1]).slice(0,7);
+    charts['donut'] = new Chart(document.getElementById('ch-donut'),{
+      type:'doughnut', data:{labels:subs.map(x=>x[0]),datasets:[{
+        data:subs.map(x=>x[1]),
+        backgroundColor:[SOLAR,OK,INFO,NG,PUR,'#1ABC9C','#E67E22'],borderWidth:0,hoverOffset:5
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
+        plugins:{legend:{position:'right',labels:{color:tc2,font:{size:9,family:fm2},boxWidth:8,padding:5}},tooltip:bTip}}
+    });
+    dc('mensal');
+    charts['mensal'] = new Chart(document.getElementById('ch-mensal'),{
+      type:'bar', data:{labels, datasets:[
+        {label:'Receita',data:m.meses.map(m.recM),backgroundColor:'rgba(61,184,122,.8)',borderWidth:0,borderRadius:3},
+        {label:'CPV',data:m.meses.map(i=>m.cpvDirM(i)+m.cpvIndM(i)),backgroundColor:'rgba(232,160,32,.75)',borderWidth:0,borderRadius:3},
+        {label:'OPEX',data:m.meses.map(i=>m.pessM(i)+m.estrM(i)+m.aquiM(i)+m.techM(i)),backgroundColor:'rgba(155,111,232,.6)',borderWidth:0,borderRadius:3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
+        plugins:{legend:{labels:{color:tc2,font:{size:10,family:fm2},boxWidth:9,padding:8}},tooltip:bTip},
+        scales:{x:bSc,y:yK}}
+    });
+  }
+
+  if (tab === 'fluxo') {
+    dc('fc');
+    charts['fc'] = new Chart(document.getElementById('ch-fc'),{
+      type:'bar', data:{labels, datasets:[
+        {label:'Entradas',data:m.meses.map(m.recM),backgroundColor:'rgba(61,184,122,.7)',borderWidth:0,borderRadius:3},
+        {label:'Saídas',data:m.meses.map(m.despM),backgroundColor:'rgba(232,85,85,.7)',borderWidth:0,borderRadius:3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
+        plugins:{legend:{labels:{color:tc2,font:{size:10,family:fm2},boxWidth:8,padding:8}},tooltip:bTip},
+        scales:{x:bSc,y:yK}}
+    });
+    dc('saldo');
+    const saldos=[]; let ac=0;
+    m.meses.forEach(i=>{ac+=m.recM(i)-m.despM(i);saldos.push(ac);});
+    charts['saldo'] = new Chart(document.getElementById('ch-saldo'),{
+      type:'line', data:{labels, datasets:[{
+        label:'Saldo acumulado', data:saldos,
+        borderColor:SOLAR,backgroundColor:'rgba(232,160,32,.07)',
+        borderWidth:2,pointBackgroundColor:saldos.map(v=>v>=0?OK:NG),pointRadius:4,fill:true,tension:.35
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
+        plugins:{legend:{display:false},tooltip:bTip},scales:{x:bSc,y:yK}}
+    });
+  }
+
+  if (tab === 'pipeline') {
+    dc('pipe');
+    charts['pipe'] = new Chart(document.getElementById('ch-pipe'),{
+      type:'bar', data:{
+        labels:['A receber','Saldo contr.','Conciliação','A pagar','Ag. aprov.','Inadimp.'],
+        datasets:[{
+          data:[m.pip_receber,m.pip_saldo,m.pip_concil,-m.pip_pagar,-m.pip_ag_aprov,-(m.inad_calotes+m.inad_protestos)],
+          backgroundColor:[OK,INFO,'rgba(232,160,32,.7)','rgba(232,85,85,.8)','rgba(232,85,85,.5)',NG],
+          borderWidth:0,borderRadius:4
+        }]
+      },
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
+        plugins:{legend:{display:false},tooltip:bTip},scales:{x:bSc,y:yK}}
+    });
+  }
+}
+
+// ============================================================
+// TABS
+// ============================================================
+const TABS = ['dre','visao','fluxo','pipeline','erros'];
+let builtTabs = {};
+function sw(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', TABS[i]===id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  if (!builtTabs[id] && metrics) {
+    builtTabs[id] = 1;
+    if (id === 'erros') renderErros();
+    else setTimeout(() => buildCharts(id), 50);
+  }
+}
+
+// ============================================================
+// STATUS
+// ============================================================
+function setStatus(state, msg) {
+  const dot = document.getElementById('sdot');
+  dot.className = 'dot ' + (state==='ok'?'dot-ok':state==='ng'?'dot-ng':'dot-load');
+  document.getElementById('smsg').textContent = msg;
+  const chip = document.getElementById('chip');
+  chip.className = 'chip ' + (state==='ok'?'chip-ok':state==='ng'?'chip-ng':'chip-warn');
+  chip.textContent = state==='ok'?'● conectado':state==='ng'?'● erro':'● carregando';
+}
+
+// ============================================================
+// MAIN
+// ============================================================
+async function iniciar() {
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  await carregarDados();
+}
+
+async function carregarDados() {
+  const btn = document.getElementById('btn-reload');
+  btn.disabled = true;
+  builtTabs = {};
+  charts = {};
+  setStatus('load', 'Conectando ao Pipefy...');
+
+  try {
+    allCards = await fetchCards();
+    setStatus('load', `Processando ${allCards.length} cards...`);
+
+    const proc = processCards(allCards);
+    metrics = calcMetrics(proc);
+
+    document.getElementById('hdr-sub').textContent =
+      `Pipe ${PIPE_ID} · ${allCards.length} cards · atualizado ${new Date().toLocaleTimeString('pt-BR')}`;
+    document.getElementById('slast').textContent = new Date().toLocaleString('pt-BR');
+
+    // Render tudo
+    buildMesBar();
+    renderDRE();
+    buildCharts('dre');
+
+    setStatus('ok', `${allCards.length} cards · ${metrics.meses.length} meses com dados`);
+  } catch(e) {
+    setStatus('ng', 'Erro: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Init
+window.onload = () => {
+  const t = localStorage.getItem('abp_token');
+  if (t) document.getElementById('inp-token').value = t;
+};
+</script>
+</body></html>
