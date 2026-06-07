@@ -335,27 +335,41 @@ function showErr(m) {
 // ============================================================
 // PIPEFY GraphQL
 // ============================================================
-async function gql(query, variables = {}, retries = 3) {
+async function gql(query, variables = {}, retries = 2) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 25000); // 25s timeout
+      const tid = setTimeout(() => controller.abort(), 30000);
       const r = await fetch(PIPE_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + TOKEN,
+          'X-Client': 'abp-solar-painel'
+        },
         body: JSON.stringify({ query, variables }),
         signal: controller.signal
       });
-      clearTimeout(timeout);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      clearTimeout(tid);
+      if (!r.ok) {
+        const body = await r.text().catch(() => '');
+        throw new Error(`HTTP ${r.status}: ${body.slice(0,200)}`);
+      }
       const d = await r.json();
-      if (d.errors) throw new Error(d.errors[0].message);
+      if (d.errors) throw new Error(d.errors.map(e=>e.message).join('; '));
       return d.data;
     } catch(e) {
+      console.error(`GQL attempt ${attempt}/${retries}:`, e.message);
       if (attempt === retries) throw e;
-      await new Promise(res => setTimeout(res, 1000 * attempt)); // backoff
+      await new Promise(res => setTimeout(res, 2000 * attempt));
     }
   }
+}
+
+// Testa conexão com query mínima
+async function testarConexao() {
+  const q = `{ me { name email } }`;
+  return await gql(q);
 }
 
 // Busca estrutura do pipe e descobre IDs das fases dinamicamente
@@ -1109,9 +1123,14 @@ async function carregarDados() {
   btn.disabled = true;
   builtTabs = {};
   charts = {};
-  setStatus('load', 'Conectando ao Pipefy...');
+  setStatus('load', 'Testando conexão...');
 
   try {
+    // Testa token primeiro com query mínima
+    const me = await testarConexao();
+    setStatus('load', `Conectado como ${me.me.name} · buscando pipe...`);
+    document.getElementById('hdr-sub').textContent = `Conectado: ${me.me.email}`;
+
     allCards = await fetchCards();
     setStatus('load', `Processando ${allCards.length} cards...`);
 
@@ -1129,8 +1148,23 @@ async function carregarDados() {
 
     setStatus('ok', `${allCards.length} cards · ${metrics.meses.length} meses com dados`);
   } catch(e) {
-    setStatus('ng', 'Erro: ' + e.message);
-    console.error(e);
+    const msg = e.message || String(e);
+    setStatus('ng', msg);
+    console.error('Erro completo:', e);
+
+    // Diagnóstico na tela
+    const diagEl = document.getElementById('p-dre');
+    const isAuth = msg.includes('401') || msg.includes('403') || msg.includes('Unauthorized');
+    const isTimeout = msg.includes('408') || msg.includes('aborted') || msg.includes('abort');
+    diagEl.innerHTML = `
+      <div style="max-width:500px;margin:40px auto;background:var(--bg2);border:.5px solid rgba(232,85,85,.3);border-radius:12px;padding:24px">
+        <div style="font-size:18px;margin-bottom:12px">⚠️ Erro de conexão</div>
+        <div style="font-family:var(--fm);font-size:11px;color:var(--ng);background:var(--bg3);padding:10px 12px;border-radius:6px;margin-bottom:16px;word-break:break-all">${msg}</div>
+        ${isAuth ? `<div style="font-size:12px;color:var(--solar);margin-bottom:12px">→ Token inválido ou expirado. Gere um novo em <a href="https://app.pipefy.com/tokens" target="_blank" style="color:var(--solar)">app.pipefy.com/tokens</a></div>` : ''}
+        ${isTimeout ? `<div style="font-size:12px;color:var(--solar);margin-bottom:12px">→ Timeout na API do Pipefy. Pode ser rate limit temporário. Aguarde 1 min e tente novamente.</div>` : ''}
+        <button class="btn btn-p" onclick="carregarDados()" style="margin-right:8px">↻ Tentar novamente</button>
+        <button class="btn btn-g" onclick="sair()">Trocar token</button>
+      </div>`;
   } finally {
     btn.disabled = false;
   }
