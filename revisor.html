@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>ABP Solar · Revisor de Cards</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --solar:#E8A020;--bg:#0F0F0F;--bg2:#181818;--bg3:#222;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#F0EDE8;--text2:#A09A90;--text3:#5A5550;
+  --ok:#3DB87A;--ng:#E85555;--info:#4A9EE8;--purple:#9B6FE8;
+  --r:10px;--fd:'Syne',sans-serif;--fm:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--fd);min-height:100vh}
+
+/* SETUP */
+.setup{max-width:480px;margin:60px auto;padding:0 20px}
+.card{background:var(--bg2);border:.5px solid var(--border2);border-radius:14px;padding:28px}
+.title{font-size:16px;font-weight:700;margin-bottom:6px}
+.sub{font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.lbl{font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:5px}
+.inp{width:100%;background:var(--bg3);border:.5px solid var(--border2);border-radius:7px;padding:9px 12px;font-size:11px;font-family:var(--fm);color:var(--text);outline:none;margin-bottom:12px;transition:border-color .15s}
+.inp:focus{border-color:var(--solar)}
+.btn{font-size:11px;font-family:var(--fm);font-weight:600;padding:8px 18px;border-radius:7px;border:none;cursor:pointer;transition:all .15s}
+.btn-p{background:var(--solar);color:#0F0F0F}.btn-p:hover{filter:brightness(1.1)}
+.btn-p:disabled{background:#444;color:#666;cursor:not-allowed}
+.btn-g{background:var(--bg3);color:var(--text2);border:.5px solid var(--border2)}
+.btn-sm{font-size:10px;padding:4px 12px;border-radius:5px}
+.hint{font-size:10px;color:var(--text3);margin-top:10px;font-family:var(--fm);line-height:1.6}
+.hint a{color:var(--solar);text-decoration:none}
+.err-box{background:rgba(232,85,85,.08);border:.5px solid rgba(232,85,85,.2);color:#E89090;border-radius:7px;padding:10px 12px;font-size:11px;margin-top:12px;display:none}
+
+/* APP */
+.hdr{padding:12px 20px;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-ic{width:26px;height:26px;background:var(--solar);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.logo-t{font-size:12px;font-weight:700;letter-spacing:.1em}
+.logo-s{font-size:10px;color:var(--text3);font-family:var(--fm)}
+.hdr-r{display:flex;align-items:center;gap:8px}
+.chip{font-size:10px;font-family:var(--fm);padding:3px 9px;border-radius:4px}
+.chip-ok{background:rgba(61,184,122,.1);color:var(--ok)}
+.chip-ng{background:rgba(232,85,85,.1);color:var(--ng)}
+.chip-warn{background:rgba(232,160,32,.1);color:var(--solar)}
+
+/* STATUS */
+.sbar{display:flex;align-items:center;gap:8px;padding:8px 20px;border-bottom:.5px solid var(--border);font-size:10px;font-family:var(--fm);color:var(--text3)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot-ok{background:var(--ok)}.dot-ng{background:var(--ng)}.dot-load{background:var(--solar);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MAIN */
+.main{padding:20px}
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-bottom:20px}
+.mc{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:11px 12px}
+.mc-l{font-size:9px;font-family:var(--fm);color:var(--text3);letter-spacing:.09em;margin-bottom:4px}
+.mc-v{font-size:18px;font-weight:700}
+.mc-s{font-size:9px;color:var(--text3);margin-top:3px;font-family:var(--fm)}
+
+/* FILTROS */
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.f-btn{font-size:10px;font-family:var(--fm);padding:4px 12px;border-radius:5px;border:.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
+.f-btn:hover{color:var(--text2)}
+.f-btn.active{font-weight:700}
+.f-btn.sev-crit.active{background:rgba(232,85,85,.15);color:var(--ng);border-color:rgba(232,85,85,.4)}
+.f-btn.sev-war.active{background:rgba(232,160,32,.1);color:var(--solar);border-color:rgba(232,160,32,.4)}
+.f-btn.sev-inf.active{background:rgba(74,158,232,.1);color:var(--info);border-color:rgba(74,158,232,.4)}
+.f-btn.sev-all.active{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.f-count{font-size:9px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px}
+
+/* BUSCA */
+.search-wrap{position:relative;margin-bottom:14px}
+.search-inp{width:100%;background:var(--bg2);border:.5px solid var(--border2);border-radius:7px;padding:8px 12px 8px 32px;font-size:11px;font-family:var(--fm);color:var(--text);outline:none;transition:border-color .15s}
+.search-inp:focus{border-color:var(--solar)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px}
+
+/* TABELA DE ERROS */
+.err-table{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.err-thead{display:grid;grid-template-columns:130px 1fr 160px 90px;border-bottom:.5px solid var(--border2);font-size:9px;font-family:var(--fm);color:var(--text3);letter-spacing:.07em}
+.err-thead .tc{padding:8px 12px}
+.err-row{display:grid;grid-template-columns:130px 1fr 160px 90px;border-bottom:.5px solid var(--border);font-size:11px;transition:background .1s;cursor:pointer}
+.err-row:last-child{border-bottom:none}
+.err-row:hover{background:rgba(255,255,255,.025)}
+.err-row.expanded{background:rgba(255,255,255,.02)}
+.tc{padding:8px 12px;display:flex;align-items:center;gap:6px;overflow:hidden}
+.tc-id a{font-family:var(--fm);font-size:10px;color:var(--solar);text-decoration:none;white-space:nowrap}
+.tc-id a:hover{text-decoration:underline}
+.tc-desc{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.tc-erros{flex-direction:column;align-items:flex-start;gap:3px}
+.tc-val{font-family:var(--fm);font-size:10px;color:var(--text3);justify-content:flex-end}
+
+/* SEVERIDADE */
+.sev{font-size:8px;font-family:var(--fm);padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+.sev-crit{background:rgba(232,85,85,.15);color:var(--ng)}
+.sev-war{background:rgba(232,160,32,.1);color:var(--solar)}
+.sev-inf{background:rgba(74,158,232,.1);color:var(--info)}
+
+/* ERRO TAG */
+.etag{font-size:9px;font-family:var(--fm);padding:1px 6px;border-radius:3px;white-space:nowrap;display:inline-block}
+.etag-crit{background:rgba(232,85,85,.12);color:var(--ng)}
+.etag-war{background:rgba(232,160,32,.1);color:var(--solar)}
+.etag-inf{background:rgba(74,158,232,.1);color:var(--info)}
+
+/* DETALHE EXPANDIDO */
+.err-detail{display:none;border-bottom:.5px solid var(--border);background:rgba(255,255,255,.015)}
+.err-detail.open{display:block}
+.err-detail-inner{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.err-detail-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
+.field-item{background:var(--bg3);border-radius:5px;padding:7px 10px}
+.field-lbl{font-size:9px;font-family:var(--fm);color:var(--text3);letter-spacing:.07em;margin-bottom:2px}
+.field-val{font-size:11px;color:var(--text2)}
+.field-val.ok{color:var(--ok)}
+.field-val.ng{color:var(--ng)}
+.field-val.warn{color:var(--solar)}
+.field-val.empty{color:var(--text3);font-style:italic}
+.err-list-detail{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.err-item-detail{display:flex;align-items:flex-start;gap:8px;font-size:11px;padding:5px 8px;background:var(--bg3);border-radius:4px}
+.err-item-icon{flex-shrink:0;margin-top:1px}
+.err-item-msg{color:var(--text2);flex:1;line-height:1.5}
+.err-item-fix{font-size:10px;font-family:var(--fm);color:var(--solar)}
+
+/* VAZIO */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state .big{font-size:32px;margin-bottom:12px}
+.empty-state .msg{font-size:13px;color:var(--text2);margin-bottom:6px}
+
+/* LOADER */
+.ld{display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:12px}
+.spin{width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--solar);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-msg{font-size:11px;font-family:var(--fm);color:var(--text3);text-align:center}
+.progress-bar-wrap{width:280px;height:3px;background:var(--border2);border-radius:2px;margin-top:4px}
+.progress-bar{height:100%;background:var(--solar);border-radius:2px;transition:width .3s}
+
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head><body>
+
+<!-- SETUP -->
+<div id="setup">
+  <div class="setup">
+    <div class="card">
+      <div style="font-size:22px;margin-bottom:12px">🔍</div>
+      <div class="title">ABP Solar · Revisor de Cards</div>
+      <div class="sub">Valida os campos de classificação dos cards na fase <strong>2026</strong> contra o modelo financeiro oficial ABP. Detecta inconsistências e mostra o motivo exato.</div>
+      <div class="lbl">PERSONAL ACCESS TOKEN</div>
+      <input type="password" id="inp-token" class="inp" placeholder="eyJhbGci..." autocomplete="off">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="conectar()">Analisar fase 2026</button>
+        <button class="btn btn-g" onclick="usarSalvo()">Usar token salvo</button>
+      </div>
+      <div class="hint">Token em: <a href="https://app.pipefy.com/tokens" target="_blank">app.pipefy.com/tokens</a></div>
+      <div class="err-box" id="setup-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-ic">🔍</div>
+      <div>
+        <div class="logo-t">ABP SOLAR · REVISOR</div>
+        <div class="logo-s" id="hdr-sub">Carregando...</div>
+      </div>
+    </div>
+    <div class="hdr-r">
+      <span class="chip chip-warn" id="chip">● carregando</span>
+      <button class="btn btn-p btn-sm" id="btn-reload" onclick="iniciar()" disabled>↻ Reanalisar</button>
+      <button class="btn btn-g btn-sm" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="sbar">
+    <div class="dot dot-load" id="sdot"></div>
+    <span id="smsg">Aguardando...</span>
+    <span style="margin-left:auto;color:var(--text3)" id="slast"></span>
+  </div>
+
+  <div class="main" id="main-content" style="display:none">
+    <!-- MÉTRICAS -->
+    <div class="summary-row" id="summary"></div>
+
+    <!-- FILTROS -->
+    <div class="filter-bar">
+      <span style="font-size:9px;font-family:var(--fm);color:var(--text3)">FILTRAR:</span>
+      <div class="f-btn sev-all active" onclick="filtrar('all')" id="f-all">Todos <span class="f-count" id="fc-all">0</span></div>
+      <div class="f-btn sev-crit" onclick="filtrar('crit')" id="f-crit">⛔ Crítico <span class="f-count" id="fc-crit">0</span></div>
+      <div class="f-btn sev-war" onclick="filtrar('war')" id="f-war">⚠ Atenção <span class="f-count" id="fc-war">0</span></div>
+      <div class="f-btn sev-inf" onclick="filtrar('inf')" id="f-inf">ℹ Info <span class="f-count" id="fc-inf">0</span></div>
+    </div>
+
+    <!-- BUSCA -->
+    <div class="search-wrap">
+      <span class="search-icon">🔎</span>
+      <input type="text" class="search-inp" id="search-inp" placeholder="Buscar por ID, descrição ou tipo de erro..." oninput="renderTabela()">
+    </div>
+
+    <!-- TABELA -->
+    <div class="err-table" id="err-table">
+      <div class="err-thead">
+        <div class="tc">ID DO CARD</div>
+        <div class="tc">DESCRIÇÃO</div>
+        <div class="tc">ERROS DETECTADOS</div>
+        <div class="tc" style="justify-content:flex-end">VALOR</div>
+      </div>
+      <div id="err-body"></div>
+    </div>
+  </div>
+
+  <!-- LOADER -->
+  <div class="ld" id="loader">
+    <div class="spin"></div>
+    <div class="ld-msg" id="ld-msg">Conectando...</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — IDs dos campos (mapeados da aba CONFIG do live.html)
+// ============================================================
+const PIPE_ID  = '1073359';
+const PIPE_URL = 'https://api.pipefy.com/graphql';
+
+const FM = {
+  valor:           'valor',
+  tipo_lanc:       'tipo_de_lan_amento',
+  cat_principal:   'categoria_principal',
+  sub_implantacao: 'categoria_opera_o',
+  sub_aquisicao:   'categorias_comercial',
+  sub_engenharia:  'categorias_engenharia',
+  sub_posv:        'categorias_suporte_ao_cliente',
+  sub_pessoas:     'categoria_pessoas',
+  sub_estrutura:   'sele_o_de_nica_op_o_vertical',
+  sub_tecnologia:  'tecnologia',
+  sub_financeiro:  'financeiro_jur_dico_e_cont_bil',
+  tipo_custo:      'tipo_de_despesa',
+  centro_custo:    'centro_de_custo_1',
+  tipo_aprop:      'tipo_de_apropria_o',
+  contrato:        'contrato_destino',
+  natureza:        'natureza_do_pagamento',
+  descricao:       'descri_o',
+  tipo_lanc:       'tipo_de_lan_amento',
+};
+
+// Valores válidos do modelo
+const CENTROS_VALIDOS  = ['Administrativo','Comercial','Engenharia','Operação','Frota'];
+const TIPOS_CUSTO      = ['Direto','Indireto Compartilhado','Estrutural'];
+const TIPOS_APROP      = ['Despesa do Mês','Estoque','Despesa Antecipada / Crédito','Ativo / Investimento'];
+const NATUREZAS        = ['Salário / Folha','Encargos / Benefícios','Nota de Serviço','Compra de Produto','Imposto / Taxa'];
+const CATS_VALIDAS     = ['Aquisição de Clientes','Estrutura e Administração','Financeiro, Jurídico e Contábil',
+                          'Implantação / Operação','Pessoas','Pós-venda e Suporte','Projeto e Engenharia','Tecnologia','Reserva'];
+// Categorias que são SEMPRE Estrutural
+const CATS_SEMPRE_ESTRUTURAL = ['Aquisição de Clientes','Estrutura e Administração','Financeiro, Jurídico e Contábil',
+                                 'Pessoas','Pós-venda e Suporte','Projeto e Engenharia','Tecnologia'];
+// Subcategorias por categoria
+const SUBCATS = {
+  'Implantação / Operação': ['ATIVOS – Ferramentas e Equipamentos Operacionais','Equipamentos','Equipamentos de Segurança (EPIs)',
+    'Estruturas e Fixações','Hospedagem e Alimentação de Equipe','Locação de Equipamentos de Obra',
+    'Logística e Frete','Materiais Elétricos','Mão de Obra de Instalação (Terceirizada)','Operação de Eletropostos'],
+  'Aquisição de Clientes': ['Brindes e Ações Promocionais','Comissões de Venda','Eventos e Feiras',
+    'Marketing de Conteúdo','Parcerias Comerciais','Plataformas Comerciais / CRM',
+    'Produção de Material Comercial','Programa de Indicação (ABPontos)','Tráfego Pago'],
+  'Estrutura e Administração': ['ATIVO – Móveis e Utensílios','ATIVO – Veículos','Aluguel e Condomínio',
+    'Benfeitorias / Reformas (Ativo)','Custos de Utilidades (Água, Energia, Internet e Telefonia)',
+    'Frota / Combustível','Insumos Administrativos','Limpeza e Conservação',
+    'Manutenção Predial','Material de Escritório','Seguros e Segurança Patrimonial'],
+  'Financeiro, Jurídico e Contábil': ['Contabilidade','Consultorias Especializadas','Honorários Jurídicos',
+    'Juros e Encargos Financeiros','Multas e Penalidades','Taxas Bancárias'],
+  'Pessoas': ['Bônus e Premiações','Encargos Trabalhistas','Outros Benefícios','Plano de Saúde / Odontológico',
+    'Pró-labore','Recrutamento e Seleção','Salários','Treinamentos e Capacitações',
+    'Uniformes','Vale Refeição / Alimentação','Vale Transporte'],
+  'Pós-venda e Suporte': ['Garantias e Assistência Técnica','Plataformas e Softwares'],
+  'Projeto e Engenharia': ['ART / CREA','Mão de Obra de Engenharia (Terceirizada / PJ)','Softwares de Projeto'],
+  'Tecnologia': ['ATIVO – Equipamentos de TI','Plataformas e Softwares','Serviços de TI (Terceirizados)'],
+};
+// Centro esperado por categoria
+const CENTRO_ESPERADO = {
+  'Aquisição de Clientes': 'Comercial',
+  'Estrutura e Administração': 'Administrativo',
+  'Financeiro, Jurídico e Contábil': 'Administrativo',
+  'Pessoas': 'Administrativo',
+  'Tecnologia': 'Administrativo',
+  'Pós-venda e Suporte': 'Operação',
+  'Projeto e Engenharia': 'Engenharia',
+  'Implantação / Operação': null, // pode variar
+};
+
+// Estado
+let TOKEN = '', allErros = [], filtroAtivo = 'all', expandedId = null;
+
+// ============================================================
+// AUTH
+// ============================================================
+function conectar() {
+  TOKEN = document.getElementById('inp-token').value.trim();
+  if (!TOKEN) { showErr('Cole o token primeiro.'); return; }
+  localStorage.setItem('abp_token', TOKEN);
+  iniciar();
+}
+function usarSalvo() {
+  TOKEN = localStorage.getItem('abp_token') || '';
+  if (!TOKEN) { showErr('Nenhum token salvo.'); return; }
+  iniciar();
+}
+function sair() {
+  document.getElementById('setup').style.display = '';
+  document.getElementById('app').style.display = 'none';
+}
+function showErr(m) {
+  const e = document.getElementById('setup-err');
+  e.textContent = '⚠ ' + m; e.style.display = '';
+}
+
+// ============================================================
+// PIPEFY API
+// ============================================================
+async function gql(query, variables = {}, retries = 2) {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 30000);
+      const r = await fetch(PIPE_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},
+        body: JSON.stringify({query, variables}),
+        signal: ctrl.signal
+      });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if (d.errors) throw new Error(d.errors.map(e=>e.message).join('; '));
+      return d.data;
+    } catch(e) {
+      if (i === retries) throw e;
+      await new Promise(r => setTimeout(r, 2000 * i));
+    }
+  }
+}
+
+// Descobre o ID da fase "2026"
+async function getFase2026Id() {
+  const q = `query($id:ID!){pipe(id:$id){phases{id name cards_count}}}`;
+  const d = await gql(q, {id: PIPE_ID});
+  const fase = d.pipe.phases.find(p => p.name.trim() === '2026');
+  if (!fase) throw new Error('Fase "2026" não encontrada no pipe.');
+  return { id: fase.id, count: fase.cards_count };
+}
+
+// Busca todos os cards da fase 2026
+async function fetchFase2026(faseId, totalCards) {
+  const cards = [];
+  let cursor = null;
+  const fieldQ = `fields { field { id label } value array_value date_value datetime_value }`;
+  while (true) {
+    const pct = Math.round(cards.length / totalCards * 100);
+    setStatus('load', `Buscando cards da fase 2026... ${cards.length}/${totalCards}`);
+    setProgress(pct);
+    const q = `query($pid:ID!,$after:String){
+      phase(id:$pid){
+        cards(first:50,after:$after){
+          pageInfo{hasNextPage endCursor}
+          edges{node{id title ${fieldQ}}}
+        }
+      }
+    }`;
+    const d = await gql(q, {pid: faseId, after: cursor});
+    const conn = d.phase.cards;
+    cards.push(...conn.edges.map(e => e.node));
+    if (!conn.pageInfo.hasNextPage) break;
+    cursor = conn.pageInfo.endCursor;
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return cards;
+}
+
+// ============================================================
+// EXTRAÇÃO DE CAMPO
+// ============================================================
+function fv(card, fieldId) {
+  const f = (card.fields||[]).find(f => f.field.id === fieldId);
+  if (!f) return null;
+  return f.value || (f.array_value && f.array_value[0]) || f.date_value || f.datetime_value || null;
+}
+function fvArr(card, fieldId) {
+  const f = (card.fields||[]).find(f => f.field.id === fieldId);
+  if (!f) return [];
+  return f.array_value || (f.value ? [f.value] : []);
+}
+function parseVal(v) {
+  if (!v) return 0;
+  return parseFloat(String(v).replace(/[R$\s.]/g,'').replace(',','.')) || 0;
+}
+
+// Pega subcategoria dependendo da categoria principal
+function getSubcat(card, cat) {
+  const subcatFieldMap = {
+    'Implantação / Operação': FM.sub_implantacao,
+    'Aquisição de Clientes': FM.sub_aquisicao,
+    'Projeto e Engenharia': FM.sub_engenharia,
+    'Pós-venda e Suporte': FM.sub_posv,
+    'Pessoas': FM.sub_pessoas,
+    'Estrutura e Administração': FM.sub_estrutura,
+    'Tecnologia': FM.sub_tecnologia,
+    'Financeiro, Jurídico e Contábil': FM.sub_financeiro,
+  };
+  const fid = subcatFieldMap[cat];
+  return fid ? (fv(card, fid) || null) : null;
+}
+
+// ============================================================
+// MOTOR DE VALIDAÇÃO (baseado na skill categoria-financeiro)
+// ============================================================
+function validarCard(card) {
+  const erros = [];
+
+  const tipo_lanc  = fv(card, FM.tipo_lanc)      || '';
+  const cat        = fv(card, FM.cat_principal)   || '';
+  const tipo_custo = fv(card, FM.tipo_custo)      || '';
+  const centro     = fv(card, FM.centro_custo)    || '';
+  const aprop      = fv(card, FM.tipo_aprop)      || '';
+  const contrato   = fv(card, FM.contrato)        || '';
+  const natureza   = fv(card, FM.natureza)        || '';
+  const subcat     = getSubcat(card, cat)         || '';
+  const valor      = parseVal(fv(card, FM.valor));
+  const isDesp     = tipo_lanc.toLowerCase().includes('pagar') || tipo_lanc.toLowerCase().includes('caju');
+  const isRec      = tipo_lanc.toLowerCase().includes('receber');
+
+  // Só valida despesas (fase 2026 pode ter receitas e despesas)
+  if (!isDesp) return erros;
+
+  // ── R1: Categoria Principal vazia ──────────────────────────
+  if (!cat) {
+    erros.push({sev:'crit', msg:'Categoria Principal não preenchida', fix:'Selecionar a categoria correta conforme o tipo de gasto'});
+    return erros; // sem categoria, não dá para validar o resto
+  }
+
+  // ── R2: Categoria inválida ──────────────────────────────────
+  if (!CATS_VALIDAS.includes(cat)) {
+    erros.push({sev:'crit', msg:`Categoria "${cat}" não existe no modelo ABP`, fix:`Usar uma das categorias válidas: ${CATS_VALIDAS.filter(c=>c!=='Reserva').join(', ')}`});
+  }
+
+  // ── R3: Subcategoria vazia (quando há opções) ───────────────
+  if (cat !== 'Reserva' && SUBCATS[cat] && !subcat) {
+    erros.push({sev:'crit', msg:`Subcategoria de "${cat}" não preenchida`, fix:`Escolher a subcategoria correta entre: ${SUBCATS[cat].slice(0,3).join(', ')}...`});
+  }
+
+  // ── R4: Subcategoria inválida ───────────────────────────────
+  if (subcat && SUBCATS[cat] && !SUBCATS[cat].includes(subcat)) {
+    erros.push({sev:'war', msg:`Subcategoria "${subcat}" não pertence a "${cat}"`, fix:`Subcategorias válidas: ${SUBCATS[cat].slice(0,3).join(', ')}...`});
+  }
+
+  // ── R5: Tipo de Custo vazio ─────────────────────────────────
+  if (cat !== 'Reserva' && !tipo_custo) {
+    erros.push({sev:'crit', msg:'Tipo de Custo não preenchido', fix:'Preencher: Estrutural (maioria das categorias) ou Direto/Indireto (Implantação/Operação)'});
+  }
+
+  // ── R6: Tipo de Custo inválido ──────────────────────────────
+  if (tipo_custo && !TIPOS_CUSTO.includes(tipo_custo)) {
+    erros.push({sev:'crit', msg:`Tipo de Custo "${tipo_custo}" inválido`, fix:`Valores válidos: ${TIPOS_CUSTO.join(', ')}`});
+  }
+
+  // ── R7: Categoria estrutural com tipo Direto ou Indireto ────
+  if (CATS_SEMPRE_ESTRUTURAL.includes(cat) && ['Direto','Indireto Compartilhado'].includes(tipo_custo)) {
+    erros.push({sev:'crit', msg:`"${cat}" deve ser sempre Estrutural, não "${tipo_custo}"`, fix:`Alterar Tipo de Custo para Estrutural — esta categoria não entra na margem do contrato`});
+  }
+
+  // ── R8: Implantação com tipo Estrutural e sem justificativa ─
+  if (cat === 'Implantação / Operação' && tipo_custo === 'Estrutural') {
+    erros.push({sev:'war', msg:'Implantação/Operação com Tipo Estrutural — custo fica fora do CPV', fix:'Revisar: se rastreável a obra = Direto · se compartilhado = Indireto Compartilhado'});
+  }
+
+  // ── R9: Direto sem contrato vinculado ───────────────────────
+  if (tipo_custo === 'Direto' && cat === 'Implantação / Operação') {
+    if (!contrato || contrato.trim() === '' || contrato === 'Estoque') {
+      erros.push({sev:'war', msg:'Custo Direto sem contrato de destino identificado', fix:'Vincular ao código do projeto (P1425, P1472...) no campo Contrato/Destino'});
+    }
+  }
+
+  // ── R10: Centro de Custo vazio ──────────────────────────────
+  if (cat !== 'Reserva' && !centro) {
+    erros.push({sev:'crit', msg:'Centro de Custo não preenchido', fix:`Esperado para "${cat}": ${CENTRO_ESPERADO[cat] || 'Operação'}`});
+  }
+
+  // ── R11: Centro de Custo inválido ───────────────────────────
+  if (centro && !CENTROS_VALIDOS.includes(centro)) {
+    erros.push({sev:'crit', msg:`Centro de Custo "${centro}" não existe no modelo`, fix:`Centros válidos: ${CENTROS_VALIDOS.join(', ')}`});
+  }
+
+  // ── R12: Centro incompatível com categoria ──────────────────
+  const centroEsperado = CENTRO_ESPERADO[cat];
+  if (centroEsperado && centro && centro !== centroEsperado && cat !== 'Implantação / Operação') {
+    erros.push({sev:'war', msg:`Centro "${centro}" atípico para "${cat}" (esperado: ${centroEsperado})`, fix:`Verificar se o centro de custo está correto — "${cat}" geralmente usa ${centroEsperado}`});
+  }
+
+  // ── R13: Tipo de Apropriação vazio ──────────────────────────
+  if (cat !== 'Reserva' && !aprop) {
+    erros.push({sev:'crit', msg:'Tipo de Apropriação não preenchido', fix:'Preencher: Despesa do Mês (serviços), Estoque (materiais), Ativo/Investimento (ferramentas/equipamentos)'});
+  }
+
+  // ── R14: Tipo de Apropriação inválido ───────────────────────
+  if (aprop && !TIPOS_APROP.includes(aprop)) {
+    erros.push({sev:'crit', msg:`Tipo de Apropriação "${aprop}" inválido`, fix:`Valores válidos: ${TIPOS_APROP.join(', ')}`});
+  }
+
+  // ── R15: Ativo lançado como Despesa do Mês ──────────────────
+  const subcatsAtivo = ['ATIVOS – Ferramentas e Equipamentos Operacionais','ATIVO – Veículos',
+                        'ATIVO – Móveis e Utensílios','ATIVO – Equipamentos de TI','Benfeitorias / Reformas (Ativo)'];
+  if (subcatsAtivo.some(s => subcat && subcat.includes(s.split('–')[1]?.trim() || s)) && aprop === 'Despesa do Mês') {
+    erros.push({sev:'war', msg:`Ativo "${subcat}" lançado como Despesa do Mês — distorce EBITDA`, fix:'Alterar Tipo de Apropriação para Ativo / Investimento — custo entra via depreciação'});
+  }
+
+  // ── R16: Compra de material como Despesa do Mês ─────────────
+  const subcatsMaterial = ['Equipamentos','Materiais Elétricos','Estruturas e Fixações'];
+  if (cat === 'Implantação / Operação' && subcatsMaterial.includes(subcat) && aprop === 'Despesa do Mês') {
+    erros.push({sev:'war', msg:`"${subcat}" como Despesa do Mês — compra de material deveria ser Estoque`, fix:'Se material ainda não consumido: Alterar para Estoque · Se já aplicado na obra: Despesa do Mês é aceitável'});
+  }
+
+  // ── R17: Natureza do pagamento vazia ────────────────────────
+  if (!natureza) {
+    erros.push({sev:'inf', msg:'Natureza do Pagamento não preenchida', fix:`Valores: ${NATUREZAS.join(', ')}`});
+  }
+
+  // ── R18: Natureza incompatível com categoria ─────────────────
+  if (cat === 'Pessoas' && natureza && !['Salário / Folha','Encargos / Benefícios'].includes(natureza)) {
+    erros.push({sev:'war', msg:`Natureza "${natureza}" atípica para Pessoas`, fix:'Pessoas geralmente usa Salário / Folha ou Encargos / Benefícios'});
+  }
+  if (cat === 'Financeiro, Jurídico e Contábil' && natureza === 'Compra de Produto') {
+    erros.push({sev:'war', msg:'Financeiro/Jurídico/Contábil com Natureza "Compra de Produto"', fix:'Verificar: serviços contábeis/jurídicos devem ser Nota de Serviço; impostos devem ser Imposto / Taxa'});
+  }
+
+  // ── R19: Reserva com campos indevidos ───────────────────────
+  if (cat === 'Reserva') {
+    if (tipo_custo) erros.push({sev:'war', msg:'Reserva não deve ter Tipo de Custo', fix:'Limpar o campo Tipo de Custo — Reserva não é despesa operacional'});
+    if (centro)     erros.push({sev:'war', msg:'Reserva não deve ter Centro de Custo', fix:'Limpar o campo Centro de Custo'});
+    if (aprop)      erros.push({sev:'war', msg:'Reserva não deve ter Tipo de Apropriação', fix:'Limpar o campo Tipo de Apropriação'});
+  }
+
+  // ── R20: Valor zerado ───────────────────────────────────────
+  if (valor === 0) {
+    erros.push({sev:'inf', msg:'Valor zerado ou não preenchido', fix:'Verificar se o valor foi informado corretamente no card'});
+  }
+
+  return erros;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+const fmtV = v => {
+  if (!v) return '—';
+  const a = Math.abs(v);
+  if (a>=1e6) return 'R$ '+(a/1e6).toFixed(2).replace('.',',')+'M';
+  if (a>=1e3) return 'R$ '+Math.round(a/1000)+'K';
+  return 'R$ '+Math.round(a).toLocaleString('pt-BR');
+};
+
+function getMaxSev(erros) {
+  if (erros.some(e=>e.sev==='crit')) return 'crit';
+  if (erros.some(e=>e.sev==='war'))  return 'war';
+  return 'inf';
+}
+
+let filtroSev = 'all', searchTerm = '';
+
+function filtrar(sev) {
+  filtroSev = sev;
+  document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('f-'+sev).classList.add('active');
+  renderTabela();
+}
+
+function renderTabela() {
+  searchTerm = document.getElementById('search-inp').value.toLowerCase();
+
+  const filtered = allErros.filter(item => {
+    const sevOk = filtroSev === 'all' || getMaxSev(item.erros) === filtroSev;
+    const searchOk = !searchTerm ||
+      item.card.id.includes(searchTerm) ||
+      (item.card.title||'').toLowerCase().includes(searchTerm) ||
+      item.erros.some(e => e.msg.toLowerCase().includes(searchTerm));
+    return sevOk && searchOk;
+  });
+
+  const body = document.getElementById('err-body');
+  if (!filtered.length) {
+    body.innerHTML = `<div class="empty-state"><div class="big">✅</div><div class="msg">Nenhum card com erro neste filtro.</div></div>`;
+    return;
+  }
+
+  body.innerHTML = filtered.map(item => {
+    const maxSev = getMaxSev(item.erros);
+    const valor = parseVal(fv(item.card, FM.valor));
+    const isExp = expandedId === item.card.id;
+    const url = `https://app.pipefy.com/open-cards/${item.card.id}`;
+
+    // Tags dos erros (max 2 visíveis)
+    const tagsHtml = item.erros.slice(0,2).map(e =>
+      `<span class="etag etag-${e.sev}">${e.msg.length>45?e.msg.slice(0,42)+'…':e.msg}</span>`
+    ).join('') + (item.erros.length > 2 ? `<span class="etag etag-inf">+${item.erros.length-2} mais</span>` : '');
+
+    // Detalhe expandido
+    const cat        = fv(item.card, FM.cat_principal) || '—';
+    const subcat     = getSubcat(item.card, cat)       || '—';
+    const tipo_custo = fv(item.card, FM.tipo_custo)    || '—';
+    const centro     = fv(item.card, FM.centro_custo)  || '—';
+    const aprop      = fv(item.card, FM.tipo_aprop)    || '—';
+    const natureza   = fv(item.card, FM.natureza)      || '—';
+    const contrato   = fv(item.card, FM.contrato)      || '—';
+
+    const fieldCls = (v, ok=[]) => !v||v==='—' ? 'empty' : ok.length&&!ok.includes(v) ? 'ng' : 'ok';
+
+    const detailHtml = `
+      <div class="err-detail${isExp?' open':''}" id="det-${item.card.id}">
+        <div class="err-detail-inner">
+          <div class="err-detail-fields">
+            <div class="field-item"><div class="field-lbl">CATEGORIA PRINCIPAL</div><div class="field-val ${fieldCls(cat,['...'])}">${cat}</div></div>
+            <div class="field-item"><div class="field-lbl">SUBCATEGORIA</div><div class="field-val ${!subcat||subcat==='—'?'empty':''}">${subcat}</div></div>
+            <div class="field-item"><div class="field-lbl">TIPO DE CUSTO</div><div class="field-val ${fieldCls(tipo_custo,TIPOS_CUSTO)}">${tipo_custo}</div></div>
+            <div class="field-item"><div class="field-lbl">TIPO DE APROPRIAÇÃO</div><div class="field-val ${fieldCls(aprop,TIPOS_APROP)}">${aprop}</div></div>
+            <div class="field-item"><div class="field-lbl">CENTRO DE CUSTO</div><div class="field-val ${fieldCls(centro,CENTROS_VALIDOS)}">${centro}</div></div>
+            <div class="field-item"><div class="field-lbl">CONTRATO / DESTINO</div><div class="field-val">${contrato}</div></div>
+            <div class="field-item"><div class="field-lbl">NATUREZA PAGAMENTO</div><div class="field-val ${fieldCls(natureza,NATUREZAS)}">${natureza}</div></div>
+            <div class="field-item"><div class="field-lbl">VALOR</div><div class="field-val">${fmtV(valor)}</div></div>
+          </div>
+          <div class="err-list-detail">
+            ${item.erros.map(e => `
+              <div class="err-item-detail">
+                <span class="err-item-icon">${e.sev==='crit'?'⛔':e.sev==='war'?'⚠️':'ℹ️'}</span>
+                <div>
+                  <div class="err-item-msg">${e.msg}</div>
+                  <div class="err-item-fix">→ ${e.fix}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>`;
+
+    return `
+      <div class="err-row${isExp?' expanded':''}" onclick="toggleDetalhe('${item.card.id}')">
+        <div class="tc tc-id">
+          <span class="sev sev-${maxSev}">${maxSev==='crit'?'⛔':maxSev==='war'?'⚠':'ℹ'}</span>
+          <a href="${url}" target="_blank" onclick="event.stopPropagation()" title="Abrir no Pipefy">${item.card.id}</a>
+        </div>
+        <div class="tc tc-desc" title="${item.card.title}">${item.card.title||'—'}</div>
+        <div class="tc tc-erros">${tagsHtml}</div>
+        <div class="tc tc-val">${fmtV(valor)}</div>
+      </div>
+      ${detailHtml}`;
+  }).join('');
+}
+
+function toggleDetalhe(id) {
+  expandedId = expandedId === id ? null : id;
+  renderTabela();
+}
+
+// ============================================================
+// STATUS
+// ============================================================
+function setStatus(state, msg) {
+  document.getElementById('sdot').className = 'dot dot-' + (state==='ok'?'ok':state==='ng'?'ng':'load');
+  document.getElementById('smsg').textContent = msg;
+  const chip = document.getElementById('chip');
+  chip.className = 'chip ' + (state==='ok'?'chip-ok':state==='ng'?'chip-ng':'chip-warn');
+  chip.textContent = state==='ok'?'● conectado':state==='ng'?'● erro':'● analisando';
+}
+function setProgress(pct) {
+  document.getElementById('progress-bar').style.width = Math.min(pct,100) + '%';
+}
+
+// ============================================================
+// MAIN
+// ============================================================
+async function iniciar() {
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('loader').style.display = '';
+  document.getElementById('btn-reload').disabled = true;
+  allErros = [];
+
+  try {
+    setStatus('load', 'Testando conexão...');
+    setProgress(5);
+    const me = await gql(`{ me { name email } }`);
+    setStatus('load', `Conectado · buscando fase 2026...`);
+    setProgress(10);
+
+    const { id: faseId, count } = await getFase2026Id();
+    setStatus('load', `Fase 2026 encontrada · ${count} cards`);
+    setProgress(15);
+
+    const cards = await fetchFase2026(faseId, count);
+    setProgress(80);
+    setStatus('load', `Validando ${cards.length} cards...`);
+
+    // Valida apenas despesas (Contas a pagar / CAJU)
+    let despesas = 0, comErro = 0;
+    cards.forEach(card => {
+      const tipo = fv(card, FM.tipo_lanc) || '';
+      const isDesp = tipo.toLowerCase().includes('pagar') || tipo.toLowerCase().includes('caju');
+      if (!isDesp) return;
+      despesas++;
+      const erros = validarCard(card);
+      if (erros.length) {
+        comErro++;
+        allErros.push({ card, erros });
+      }
+    });
+
+    // Ordena: críticos primeiro, depois por valor
+    allErros.sort((a, b) => {
+      const sevOrder = {crit:0, war:1, inf:2};
+      const sa = sevOrder[getMaxSev(a.erros)];
+      const sb = sevOrder[getMaxSev(b.erros)];
+      if (sa !== sb) return sa - sb;
+      return parseVal(fv(b.card, FM.valor)) - parseVal(fv(a.card, FM.valor));
+    });
+
+    setProgress(100);
+
+    // Contadores por severidade
+    const nCrit = allErros.filter(i => getMaxSev(i.erros)==='crit').length;
+    const nWar  = allErros.filter(i => getMaxSev(i.erros)==='war').length;
+    const nInf  = allErros.filter(i => getMaxSev(i.erros)==='inf').length;
+
+    document.getElementById('fc-all').textContent  = allErros.length;
+    document.getElementById('fc-crit').textContent = nCrit;
+    document.getElementById('fc-war').textContent  = nWar;
+    document.getElementById('fc-inf').textContent  = nInf;
+
+    // Sumário
+    const valComErro = allErros.reduce((a,i) => a + parseVal(fv(i.card, FM.valor)), 0);
+    document.getElementById('summary').innerHTML = `
+      <div class="mc"><div class="mc-l">CARDS ANALISADOS</div><div class="mc-v" style="color:var(--text)">${despesas.toLocaleString('pt-BR')}</div><div class="mc-s">despesas na fase 2026</div></div>
+      <div class="mc" style="border-color:rgba(232,85,85,.3)"><div class="mc-l">COM ERRO</div><div class="mc-v" style="color:var(--ng)">${comErro}</div><div class="mc-s">${(100*comErro/despesas).toFixed(1)}% dos cards</div></div>
+      <div class="mc"><div class="mc-l">⛔ CRÍTICOS</div><div class="mc-v" style="color:var(--ng)">${nCrit}</div><div class="mc-s">campos obrigatórios</div></div>
+      <div class="mc"><div class="mc-l">⚠ ATENÇÃO</div><div class="mc-v" style="color:var(--solar)">${nWar}</div><div class="mc-s">classificação suspeita</div></div>
+      <div class="mc"><div class="mc-l">ℹ INFO</div><div class="mc-v" style="color:var(--info)">${nInf}</div><div class="mc-s">melhorias sugeridas</div></div>
+      <div class="mc"><div class="mc-l">VALOR IMPACTADO</div><div class="mc-v" style="color:var(--solar)">${fmtV(valComErro)}</div><div class="mc-s">nos cards com erro</div></div>
+    `;
+
+    document.getElementById('hdr-sub').textContent =
+      `Fase 2026 · ${cards.length} cards · ${comErro} com erro · ${new Date().toLocaleTimeString('pt-BR')}`;
+    document.getElementById('slast').textContent = new Date().toLocaleString('pt-BR');
+    setStatus('ok', `${comErro} cards com inconsistências de ${despesas} despesas analisadas`);
+
+    renderTabela();
+
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('main-content').style.display = '';
+
+  } catch(e) {
+    setStatus('ng', e.message);
+    document.getElementById('ld-msg').textContent = '⚠ Erro: ' + e.message;
+    document.getElementById('progress-bar').style.background = 'var(--ng)';
+    console.error(e);
+  } finally {
+    document.getElementById('btn-reload').disabled = false;
+  }
+}
+
+window.onload = () => {
+  const t = localStorage.getItem('abp_token');
+  if (t) document.getElementById('inp-token').value = t;
+};
+</script>
+</body></html>
