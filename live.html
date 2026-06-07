@@ -358,6 +358,17 @@ async function gql(query, variables = {}, retries = 3) {
   }
 }
 
+// Busca estrutura do pipe e descobre IDs das fases dinamicamente
+async function fetchPipeStructure() {
+  const q = `query($id: ID!) {
+    pipe(id: $id) {
+      phases { id name cards_count }
+    }
+  }`;
+  const d = await gql(q, { id: PIPE_ID });
+  return d.pipe.phases;
+}
+
 // Busca cards de uma fase específica (paginado)
 async function fetchFase(phaseId, faseName) {
   let cards = [], cursor = null;
@@ -384,29 +395,51 @@ async function fetchFase(phaseId, faseName) {
   return cards;
 }
 
-// Busca apenas as fases relevantes para 2026 (ignora fases vazias ou irrelevantes)
+// Fases a IGNORAR (nomes exatos como aparecem no Pipefy)
+const FASES_IGNORAR = ['Arquivo', 'Caixa de entrada'];
+
+// Busca apenas fases relevantes, descobrindo IDs dinamicamente
 async function fetchCards() {
-  const fasesRelevantes = [
-    { id: FASES.CONCLUIDO,    nome: 'Concluído'         },
-    { id: FASES.RECEBER,      nome: 'Receber'            },
-    { id: FASES.SALDO_CONTR,  nome: 'Saldo contratos'   },
-    { id: FASES.PROVISIONAR,  nome: 'Provisionar'        },
-    { id: FASES.PAGAR,        nome: 'Pagar'              },
-    { id: FASES.AG_APROV,     nome: 'Ag. aprovação'      },
-    { id: FASES.CONCILIACAO,  nome: 'Conciliação'        },
-    { id: FASES.PROTESTOS,    nome: 'Protestos'          },
-    { id: FASES.CALOTES,      nome: 'Calotes'            },
-    { id: FASES.TAXA_CARTAO,  nome: 'Taxa cartão'        },
-  ];
+  setStatus('load', 'Buscando estrutura do pipe...');
+  const phases = await fetchPipeStructure();
+
+  // Log das fases encontradas
+  console.log('Fases encontradas:', phases.map(p => `${p.name} (${p.id}) — ${p.cards_count} cards`));
+
+  // Atualiza FASES dinamicamente com o que vier do pipe
+  phases.forEach(p => {
+    const n = p.name.toLowerCase().trim();
+    if (n === '2026')                          FASES.CONCLUIDO    = p.id;
+    if (n === 'receber')                       FASES.RECEBER      = p.id;
+    if (n === 'saldo de contratos / permutas') FASES.SALDO_CONTR  = p.id;
+    if (n === 'provisionar')                   FASES.PROVISIONAR  = p.id;
+    if (n === 'pagar')                         FASES.PAGAR        = p.id;
+    if (n === 'aguardando aprovação')          FASES.AG_APROV     = p.id;
+    if (n === 'conciliação financeira')        FASES.CONCILIACAO  = p.id;
+    if (n === 'protestos / judicial / negociação') FASES.PROTESTOS = p.id;
+    if (n === 'cancelados / calotes')          FASES.CALOTES      = p.id;
+    if (n === 'taxa de cartão')                FASES.TAXA_CARTAO  = p.id;
+  });
+
+  // Filtra fases relevantes: com cards, não ignoradas
+  const fasesRelevantes = phases.filter(p => {
+    const ignorar = FASES_IGNORAR.some(ig => 
+      p.name.toLowerCase().trim() === ig.toLowerCase().trim()
+    );
+    return !ignorar && p.cards_count > 0;
+  });
+
+  console.log('Fases que serão buscadas:', fasesRelevantes.map(p => `${p.name} (${p.cards_count} cards)`));
 
   let allCards = [];
   for (const fase of fasesRelevantes) {
-    setStatus('load', `Buscando fase: ${fase.nome}... (${allCards.length} cards)`);
+    setStatus('load', `Buscando: ${fase.name} (${fase.cards_count} cards)...`);
     try {
-      const cards = await fetchFase(fase.id, fase.nome);
+      const cards = await fetchFase(fase.id, fase.name);
       allCards.push(...cards);
+      setStatus('load', `✓ ${fase.name}: ${cards.length} cards · Total: ${allCards.length}`);
     } catch(e) {
-      console.warn(`Erro na fase ${fase.nome}:`, e.message);
+      console.warn(`Erro na fase ${fase.name}:`, e.message);
     }
   }
   return allCards;
@@ -451,8 +484,10 @@ function parseDate(card) {
 function parseMonth(card) {
   const d = parseDate(card);
   if (!d || isNaN(d)) return null;
-  // Filtro: apenas 2026
-  if (d.getFullYear() !== 2026) return null;
+  // Sem filtro de ano — a fase "2026" já garante que são cards do ano correto
+  // Mas mantemos proteção: se a data for absurda (ex: ano < 2020), ignora
+  const year = d.getFullYear();
+  if (year < 2020 || year > 2030) return null;
   return d.getMonth(); // 0-indexed
 }
 
