@@ -335,38 +335,81 @@ function showErr(m) {
 // ============================================================
 // PIPEFY GraphQL
 // ============================================================
-async function gql(query, variables = {}) {
-  const r = await fetch(PIPE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
-    body: JSON.stringify({ query, variables })
-  });
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  const d = await r.json();
-  if (d.errors) throw new Error(d.errors[0].message);
-  return d.data;
+async function gql(query, variables = {}, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000); // 25s timeout
+      const r = await fetch(PIPE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        body: JSON.stringify({ query, variables }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if (d.errors) throw new Error(d.errors[0].message);
+      return d.data;
+    } catch(e) {
+      if (attempt === retries) throw e;
+      await new Promise(res => setTimeout(res, 1000 * attempt)); // backoff
+    }
+  }
 }
 
-// Busca todos os cards paginados
-async function fetchCards() {
-  let cards = [], cursor = null, page = 0;
+// Busca cards de uma fase específica (paginado)
+async function fetchFase(phaseId, faseName) {
+  let cards = [], cursor = null;
   const fieldQ = `fields { field { id label } value array_value date_value datetime_value }`;
+  let page = 0;
   while (true) {
     page++;
-    setStatus('load', `Buscando cards... página ${page} (${cards.length} cards)`);
+    if (page > 1) setStatus('load', `${faseName}: pág ${page} (${cards.length} cards)...`);
     const q = `query($pid: ID!, $after: String) {
-      cards(pipe_id: $pid, first: 50, after: $after) {
-        pageInfo { hasNextPage endCursor }
-        edges { node { id title current_phase { id name } ${fieldQ} } }
+      phase(id: $pid) {
+        cards(first: 50, after: $after) {
+          pageInfo { hasNextPage endCursor }
+          edges { node { id title current_phase { id name } ${fieldQ} } }
+        }
       }
     }`;
-    const d = await gql(q, { pid: PIPE_ID, after: cursor });
-    const conn = d.cards;
+    const d = await gql(q, { pid: phaseId, after: cursor });
+    const conn = d.phase.cards;
     cards.push(...conn.edges.map(e => e.node));
     if (!conn.pageInfo.hasNextPage) break;
     cursor = conn.pageInfo.endCursor;
+    await new Promise(res => setTimeout(res, 50)); // pequena pausa entre páginas
   }
   return cards;
+}
+
+// Busca apenas as fases relevantes para 2026 (ignora fases vazias ou irrelevantes)
+async function fetchCards() {
+  const fasesRelevantes = [
+    { id: FASES.CONCLUIDO,    nome: 'Concluído'         },
+    { id: FASES.RECEBER,      nome: 'Receber'            },
+    { id: FASES.SALDO_CONTR,  nome: 'Saldo contratos'   },
+    { id: FASES.PROVISIONAR,  nome: 'Provisionar'        },
+    { id: FASES.PAGAR,        nome: 'Pagar'              },
+    { id: FASES.AG_APROV,     nome: 'Ag. aprovação'      },
+    { id: FASES.CONCILIACAO,  nome: 'Conciliação'        },
+    { id: FASES.PROTESTOS,    nome: 'Protestos'          },
+    { id: FASES.CALOTES,      nome: 'Calotes'            },
+    { id: FASES.TAXA_CARTAO,  nome: 'Taxa cartão'        },
+  ];
+
+  let allCards = [];
+  for (const fase of fasesRelevantes) {
+    setStatus('load', `Buscando fase: ${fase.nome}... (${allCards.length} cards)`);
+    try {
+      const cards = await fetchFase(fase.id, fase.nome);
+      allCards.push(...cards);
+    } catch(e) {
+      console.warn(`Erro na fase ${fase.nome}:`, e.message);
+    }
+  }
+  return allCards;
 }
 
 // ============================================================
